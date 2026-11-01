@@ -1,0 +1,2233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI Framework Spec</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Open+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'deloitte-green': '#86BC25',
+                        'deloitte-green-accessible': '#628f14',
+                        'deloitte-green-dark': '#4c750b',
+                        'deloitte-black': '#000000',
+                    },
+                    fontFamily: {
+                        display: ['"Open Sans"', '"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],
+                        sans: ['"Open Sans"', 'Arial', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Enforce rigid layout structures universally */
+        *,
+        *::before,
+        *::after {
+            border-radius: 0px !important;
+        }
+
+        .bg-deloitte-black {
+            background-color: #000000;
+        }
+
+        .text-deloitte-black {
+            color: #000000;
+        }
+
+        .border-deloitte-black {
+            border-color: #000000;
+        }
+
+        .bg-deloitte-green {
+            background-color: #86BC25;
+        }
+
+        .text-deloitte-green {
+            color: #628f14;
+        }
+
+        .dark .text-deloitte-green {
+            color: #86BC25;
+        }
+
+        /* Vivid green on dark backgrounds */
+        .border-deloitte-green {
+            border-color: #86BC25;
+        }
+
+        .font-display {
+            font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }
+
+        :focus-visible {
+            outline: 2px solid #000000 !important;
+            outline-offset: 1px !important;
+        }
+
+        .dark :focus-visible {
+            outline: 2px solid #86BC25 !important;
+            outline-offset: 1px !important;
+        }
+
+        /* Clean Print Optimization */
+        @media print {
+
+            header,
+            #toastNotification,
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main {
+                max-width: 100% !important;
+                padding: 0 !important;
+            }
+        }
+    </style>
+</head>
+
+<body
+    class="bg-[#EFEFF2] dark:bg-[#09090b] font-sans text-neutral-900 dark:text-neutral-100 min-h-screen flex flex-col antialiased transition-colors duration-200">
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <aside id="toastNotification" aria-live="polite" aria-atomic="true"
+        class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-200 pointer-events-none bg-neutral-950 text-white dark:bg-white dark:text-neutral-950 px-4 py-3 border-2 border-[#86BC25] shadow-2xl flex items-center gap-3 font-mono text-xs font-bold">
+        <span class="w-2.5 h-2.5 bg-[#86BC25] shrink-0"></span>
+        <span id="toastMessage">Prompt copied to clipboard.</span>
+    </aside>
+
+    <!-- SYSTEM TOPBAR LAYER -->
+    <header
+        class="h-16 bg-black text-white px-6 flex items-center justify-between border-b-2 border-neutral-700 sticky top-0 z-40 shadow-md">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center font-display tracking-tight text-xl font-extrabold select-none">
+                <span>SHOWCASE</span>
+                <span class="text-[#86BC25] ml-0.5 leading-none">.</span>
+            </div>
+            <span class="text-neutral-500 text-sm hidden sm:inline" aria-hidden="true">|</span>
+            <h1 class="text-xs tracking-wider text-neutral-200 font-bold uppercase hidden sm:block">
+                UI Framework Spec
+            </h1>
+        </div>
+
+        <!-- THEME & PROMPT UTILITIES -->
+        <div class="flex items-center gap-3">
+            <button type="button" onclick="copySystemPrompt(this)" id="copyBtn"
+                class="copy-prompt-btn px-3.5 py-2 bg-[#86BC25] hover:bg-[#72a11f] text-black font-display text-xs font-extrabold uppercase tracking-wider transition-colors cursor-pointer border border-black shadow-xs">
+                📋 Copy AI Prompt
+            </button>
+
+            <!-- Standard Theme Toggle Icon Button -->
+            <button type="button" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light/Dark Theme"
+                aria-label="Toggle Theme"
+                class="w-9 h-9 flex items-center justify-center bg-neutral-800 hover:bg-neutral-700 text-white border-2 border-neutral-500 hover:border-neutral-300 transition-colors cursor-pointer">
+                <!-- Sun Icon (shown when dark) -->
+                <svg id="themeSunIcon" class="w-4 h-4 hidden text-amber-300 fill-current" viewBox="0 0 20 20"
+                    aria-hidden="true">
+                    <path fill-rule="evenodd"
+                        d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+                        clip-rule="evenodd" />
+                </svg>
+                <!-- Moon Icon (shown when light) -->
+                <svg id="themeMoonIcon" class="w-4 h-4 text-neutral-200 fill-current" viewBox="0 0 20 20"
+                    aria-hidden="true">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- SPECIFICATION WRAPPER CANVAS -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-6 md:p-8 space-y-12">
+
+        <!-- PROMPT SUMMARY SHEET -->
+        <section
+            class="bg-white dark:bg-neutral-900 border-t-4 border-[#86BC25] p-6 shadow-sm border border-neutral-300 dark:border-neutral-700">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2
+                        class="text-lg font-extrabold font-display uppercase tracking-tight text-neutral-950 dark:text-white">
+                        AI System Prompt Instructions
+                    </h2>
+                    <p class="text-xs font-medium text-neutral-700 dark:text-neutral-300 mt-1">
+                        UI Design specification matrix. Ready to inject into Cursor <code
+                            class="text-xs font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-200 px-1.5 py-0.5 border border-neutral-300 dark:border-neutral-700">.cursorrules</code>,
+                        Copilot, or Claude.
+                    </p>
+                </div>
+                <button type="button" onclick="copySystemPrompt(this)" id="sectionCopyBtn"
+                    class="copy-prompt-btn self-start md:self-auto px-4 py-2 bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-950 border border-neutral-900 dark:border-white text-xs font-extrabold font-display uppercase tracking-wider hover:bg-black dark:hover:bg-white transition-colors cursor-pointer">
+                    Copy Constraint Block
+                </button>
+            </div>
+
+            <div id="systemPromptBlock"
+                class="mt-4 p-4 bg-neutral-100 dark:bg-neutral-950 border-2 border-neutral-300 dark:border-neutral-700 font-mono text-xs text-neutral-800 dark:text-neutral-200 space-y-2 select-all">
+                <p class="font-extrabold text-neutral-950 dark:text-white">[UI DESIGN SYSTEM CONSTRAINTS]:
+                </p>
+                <p>1. <strong class="text-neutral-950 dark:text-white">GEOMETRY:</strong> All elements must have
+                    explicit 0px border-radius (`border-radius: 0px !important`). Strictly no rounded edges, pill
+                    badges, or soft radii.</p>
+                <p>2. <strong class="text-neutral-950 dark:text-white">CONTRAST & READABILITY:</strong> All text labels,
+                    category subheaders, and helper copy must meet minimum 4.5:1 (WCAG AA/AAA). Muted grey labels must
+                    use bold weights and dark slate tones (e.g. `text-neutral-700 dark:text-neutral-300`), not
+                    washed-out greys.</p>
+                <p>3. <strong class="text-neutral-950 dark:text-white">ACCENT PROTOCOL:</strong> Deloitte Green
+                    (#86BC25) is strictly reserved as an intentional anchor dot, positive delta marker, active tab rule,
+                    or focus indicator. Use `#628f14` for small green text on light backgrounds for guaranteed contrast
+                    ratio.</p>
+                <p>4. <strong class="text-neutral-950 dark:text-white">DARK MODE SYMMETRY:</strong> Canvas:
+                    `bg-[#EFEFF2] dark:bg-[#09090b]`. Cards: `bg-white dark:bg-neutral-900`. Borders:
+                    `border-neutral-300 dark:border-neutral-700`. Primary text: `text-neutral-950 dark:text-white`.</p>
+                <p>5. <strong class="text-neutral-950 dark:text-white">BUSINESS & AGENTIC ARCHITECTURE:</strong> Use structured definition lists (`<dl>`) for entity metadata dossiers, facet filter toolbars with removable chips, modal confirmation overlays with clear impact notes, embedded AI insight cards (with confidence rating, rationale bullets, and dual accept/override actions), and chronological audit streams with actor tags (`AGENT`, `USER`, `GATEWAY`).</p>
+            </div>
+        </section>
+
+        <!-- COMPONENT MASTER DIRECTORY -->
+        <section class="space-y-6">
+            <h3
+                class="text-xs font-extrabold uppercase tracking-widest text-neutral-700 dark:text-neutral-300 border-b-2 border-neutral-300 dark:border-neutral-700 pb-2">
+                Standard UI Component Showcase
+            </h3>
+
+            <!-- ROW 1: FORMS, KPIS, ACTIONS -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <!-- MODULE COLUMN 1: FORM CONTROLS -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        1. Form Controls
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 space-y-5 shadow-xs">
+                        <!-- Text Input -->
+                        <div class="flex flex-col gap-1.5 w-full">
+                            <label for="corporate-entity-name"
+                                class="text-xs font-extrabold uppercase tracking-wider text-neutral-800 dark:text-neutral-200 font-display">
+                                Corporate Entity Name <span class="text-[#628f14] dark:text-[#86BC25] font-black"
+                                    aria-hidden="true">*</span>
+                                <span class="sr-only">(required)</span>
+                            </label>
+                            <input type="text" id="corporate-entity-name" required
+                                placeholder="e.g., Global Energy Corp Holdings" aria-describedby="corporate-entity-help"
+                                class="w-full px-4 py-2.5 bg-neutral-50 dark:bg-neutral-950 border-2 border-neutral-400 dark:border-neutral-600 text-sm font-sans font-medium focus:border-black dark:focus:border-[#86BC25] text-neutral-950 dark:text-white placeholder-neutral-500" />
+                            <span id="corporate-entity-help"
+                                class="text-[11px] font-semibold text-neutral-600 dark:text-neutral-400">Must match
+                                statutory SEC filing designation.</span>
+                        </div>
+
+                        <!-- Input with Prefix -->
+                        <div class="flex flex-col gap-1.5 w-full">
+                            <label for="materiality-threshold"
+                                class="text-xs font-extrabold uppercase tracking-wider text-neutral-800 dark:text-neutral-200 font-display">
+                                Materiality Threshold
+                            </label>
+                            <div
+                                class="flex items-stretch border-2 border-neutral-400 dark:border-neutral-600 focus-within:border-black dark:focus-within:border-[#86BC25]">
+                                <span aria-hidden="true"
+                                    class="inline-flex items-center px-3.5 bg-neutral-200 dark:bg-neutral-800 border-r-2 border-neutral-400 dark:border-neutral-600 text-xs font-extrabold text-neutral-900 dark:text-neutral-100 select-none">
+                                    USD ($)
+                                </span>
+                                <input type="text" id="materiality-threshold" value="2,500,000"
+                                    aria-label="Materiality Threshold amount in USD millions"
+                                    class="flex-1 px-3 py-2 bg-white dark:bg-neutral-950 text-sm font-mono font-bold text-neutral-950 dark:text-white focus:outline-hidden" />
+                                <span aria-hidden="true"
+                                    class="inline-flex items-center px-3 bg-neutral-100 dark:bg-neutral-800 text-xs font-mono font-bold text-neutral-700 dark:text-neutral-300 select-none border-l-2 border-neutral-400 dark:border-neutral-600">
+                                    MM
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Custom Dropdown Selector -->
+                        <div class="flex flex-col gap-1.5 w-full">
+                            <label for="practice-area-select"
+                                class="text-xs font-extrabold uppercase tracking-wider text-neutral-800 dark:text-neutral-200 font-display">
+                                Practice Area Stream
+                            </label>
+                            <div class="relative w-full">
+                                <select id="practice-area-select"
+                                    class="w-full px-4 py-2.5 bg-neutral-50 dark:bg-neutral-950 border-2 border-neutral-400 dark:border-neutral-600 text-sm font-sans font-bold appearance-none focus:border-black dark:focus:border-[#86BC25] text-neutral-950 dark:text-white cursor-pointer pr-10">
+                                    <option>Core Audit & Assurance</option>
+                                    <option>Risk & Financial Advisory</option>
+                                    <option>Tax & Legal Advisement</option>
+                                    <option>Cyber Strategy & Forensics</option>
+                                </select>
+                                <div aria-hidden="true"
+                                    class="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-neutral-800 dark:text-neutral-200">
+                                    <svg class="w-4 h-4 fill-current stroke-current" viewBox="0 0 20 20">
+                                        <path
+                                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Textarea with Live Counter -->
+                        <div class="flex flex-col gap-1.5 w-full">
+                            <label for="control-deviation-remarks"
+                                class="text-xs font-extrabold uppercase tracking-wider text-neutral-800 dark:text-neutral-200 font-display flex justify-between">
+                                <span>Control Deviation Remarks</span>
+                                <span id="remarksCounter" aria-live="polite"
+                                    class="text-[11px] font-mono text-neutral-600 dark:text-neutral-400">62/500</span>
+                            </label>
+                            <textarea id="control-deviation-remarks" rows="3" maxlength="500"
+                                placeholder="Enter specific audit review findings and control references..."
+                                class="w-full p-3 bg-neutral-50 dark:bg-neutral-950 border-2 border-neutral-400 dark:border-neutral-600 text-xs font-medium text-neutral-950 dark:text-white placeholder-neutral-500 focus:border-black dark:focus:border-[#86BC25]">Sample substantive deviation recorded during Q3 compliance sampling.</textarea>
+                        </div>
+
+                        <!-- Checkbox System -->
+                        <div
+                            class="flex items-start gap-3 select-none pt-2 p-3 bg-neutral-50 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-700">
+                            <input type="checkbox" id="check-compliance" checked aria-describedby="compliance-desc"
+                                class="w-4 h-4 mt-0.5 border-2 border-neutral-700 accent-black dark:accent-white cursor-pointer" />
+                            <div class="text-xs">
+                                <label for="check-compliance"
+                                    class="font-extrabold text-neutral-950 dark:text-white block font-display cursor-pointer">
+                                    Authorize Compliance Screening
+                                </label>
+                                <p id="compliance-desc"
+                                    class="text-neutral-700 dark:text-neutral-300 font-medium text-[11px] mt-0.5">
+                                    Confirm that independence protocols meet SEC and PCAOB criteria.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Flat Rectangular Toggle (Accessible with Keyboard Focus) -->
+                        <label for="sec-protocol-mode"
+                            class="flex items-center justify-between p-3.5 bg-neutral-100 dark:bg-neutral-950 border-2 border-neutral-300 dark:border-neutral-700 cursor-pointer">
+                            <span
+                                class="text-xs font-extrabold uppercase tracking-wider text-neutral-950 dark:text-white font-display">
+                                Strict SEC Protocol Mode
+                            </span>
+                            <div class="relative">
+                                <input type="checkbox" id="sec-protocol-mode" checked class="sr-only peer" />
+                                <div
+                                    class="w-11 h-6 bg-neutral-400 dark:bg-neutral-700 peer-checked:bg-black dark:peer-checked:bg-[#86BC25] transition-colors border-2 border-neutral-700 dark:border-neutral-400 peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-black dark:peer-focus-visible:ring-[#86BC25]">
+                                </div>
+                                <div
+                                    class="absolute left-1 top-1 w-4 h-4 bg-white dark:bg-black peer-checked:translate-x-5 transition-transform pointer-events-none">
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- MODULE COLUMN 2: EXECUTIVE DATA METRICS & ANALYTICS -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        2. KPI Metric Aggregators
+                    </h4>
+
+                    <div class="space-y-4">
+                        <!-- Active Card Instance -->
+                        <div
+                            class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 shadow-xs relative flex flex-col justify-between min-h-[140px]">
+                            <div>
+                                <span
+                                    class="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 font-display">
+                                    Managed Portfolio Revenue
+                                </span>
+                                <p
+                                    class="text-3xl font-black tracking-tight text-neutral-950 dark:text-white mt-1 font-display">
+                                    $4.2M
+                                </p>
+                            </div>
+                            <div
+                                class="mt-4 text-xs font-bold text-[#4c750b] dark:text-[#86BC25] flex items-center gap-1.5">
+                                <span
+                                    class="bg-[#e9f5d3] dark:bg-[#86BC25]/20 px-2 py-0.5 border border-[#86BC25]/40 font-mono">▲
+                                    +12.4%</span>
+                                <span class="text-neutral-700 dark:text-neutral-300 font-medium">vs last quarter
+                                    benchmark</span>
+                            </div>
+                        </div>
+
+                        <!-- Risk Evaluation Instance -->
+                        <div
+                            class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 border-l-6 border-l-red-600 shadow-xs relative flex flex-col justify-between min-h-[140px]">
+                            <div>
+                                <span
+                                    class="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 font-display">
+                                    Operational Risk Matrix
+                                </span>
+                                <p
+                                    class="text-3xl font-black tracking-tight text-neutral-950 dark:text-white mt-1 font-display">
+                                    High Alert
+                                </p>
+                            </div>
+                            <div
+                                class="mt-4 text-xs font-bold text-red-700 dark:text-red-400 flex items-center gap-1.5">
+                                <span
+                                    class="bg-red-100 dark:bg-red-950/60 px-2 py-0.5 border border-red-400 dark:border-red-800 font-mono">▼
+                                    Variance</span>
+                                <span class="text-neutral-700 dark:text-neutral-300 font-medium">3 critical findings
+                                    require sign-off</span>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar Component (Accessible) -->
+                        <div
+                            class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 shadow-xs space-y-3">
+                            <div class="flex justify-between items-center text-xs">
+                                <span id="audit-progress-label"
+                                    class="font-extrabold uppercase tracking-wider text-neutral-800 dark:text-neutral-200 font-display">
+                                    Statutory Audit Progress
+                                </span>
+                                <span class="font-mono font-black text-neutral-950 dark:text-white">78%</span>
+                            </div>
+                            <div role="progressbar" aria-valuenow="78" aria-valuemin="0" aria-valuemax="100"
+                                aria-labelledby="audit-progress-label"
+                                class="w-full h-3 bg-neutral-200 dark:bg-neutral-800 border border-neutral-400 dark:border-neutral-600">
+                                <div class="bg-[#86BC25] h-full w-[78%] border-r border-black"></div>
+                            </div>
+                            <span class="text-[11px] font-bold text-neutral-700 dark:text-neutral-300 block font-mono">
+                                48 of 61 Workpapers Verified & Locked
+                            </span>
+                        </div>
+
+                        <!-- Status Badges Collection -->
+                        <div
+                            class="bg-white dark:bg-neutral-900 p-5 border-2 border-neutral-300 dark:border-neutral-700 shadow-xs space-y-3">
+                            <span
+                                class="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 block font-display">
+                                Corporate Status Badges
+                            </span>
+                            <div class="flex flex-wrap gap-2">
+                                <span
+                                    class="inline-flex items-center gap-1.5 px-3 py-1 bg-white dark:bg-neutral-950 border-2 border-neutral-800 dark:border-neutral-300 text-xs font-extrabold uppercase tracking-wider text-neutral-950 dark:text-white">
+                                    <span class="w-2.5 h-2.5 bg-[#86BC25]" aria-hidden="true"></span> Approved
+                                </span>
+                                <span
+                                    class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 dark:bg-amber-950/60 border-2 border-amber-600 text-xs font-extrabold uppercase tracking-wider text-amber-950 dark:text-amber-200">
+                                    <span class="w-2.5 h-2.5 bg-amber-500" aria-hidden="true"></span> Under Review
+                                </span>
+                                <span
+                                    class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-100 dark:bg-red-950/60 border-2 border-red-600 text-xs font-extrabold uppercase tracking-wider text-red-950 dark:text-red-200">
+                                    <span class="w-2.5 h-2.5 bg-red-600" aria-hidden="true"></span> Disqualified
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE COLUMN 3: SYSTEM ACTIONS & BUTTON STATES -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        3. Corporate Action Triggers
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 space-y-5 shadow-xs">
+                        <!-- Primary Corporate Action -->
+                        <div>
+                            <span
+                                class="text-xs text-neutral-700 dark:text-neutral-300 block mb-2 font-display uppercase tracking-wider font-extrabold">
+                                Primary Action Trigger
+                            </span>
+                            <button type="button" onclick="showToast('Executing automated audit procedure pipeline...')"
+                                class="w-full px-5 py-3 bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 text-xs font-black font-display uppercase tracking-wider transition-colors cursor-pointer border-2 border-black dark:border-white shadow-xs">
+                                Execute Audit Procedure
+                            </button>
+                        </div>
+
+                        <!-- Secondary Outlined Action -->
+                        <div>
+                            <span
+                                class="text-xs text-neutral-700 dark:text-neutral-300 block mb-2 font-display uppercase tracking-wider font-extrabold">
+                                Secondary Outlined Trigger
+                            </span>
+                            <button type="button" onclick="showToast('Packaging statutory attestation bundle...')"
+                                class="w-full px-5 py-3 bg-white text-black hover:bg-neutral-100 border-2 border-neutral-800 dark:bg-neutral-950 dark:text-white dark:border-neutral-300 dark:hover:bg-neutral-800 text-xs font-black font-display uppercase tracking-wider transition-colors cursor-pointer">
+                                Export Attestation Package
+                            </button>
+                        </div>
+
+                        <!-- Signature Accent Action -->
+                        <div>
+                            <span
+                                class="text-xs text-neutral-700 dark:text-neutral-300 block mb-2 font-display uppercase tracking-wider font-extrabold">
+                                Signature Accent Trigger
+                            </span>
+                            <button type="button"
+                                onclick="showToast('Signed off & certified by Lead Engagement Partner.')"
+                                class="w-full px-5 py-3 bg-[#86BC25] text-black hover:bg-[#72a11f] text-xs font-black font-display uppercase tracking-wider transition-colors cursor-pointer border-2 border-black shadow-xs">
+                                Sign Off & Certify
+                            </button>
+                        </div>
+
+                        <!-- Destructive Action -->
+                        <div>
+                            <span
+                                class="text-xs text-neutral-700 dark:text-neutral-300 block mb-2 font-display uppercase tracking-wider font-extrabold">
+                                Destructive Action
+                            </span>
+                            <button type="button" onclick="showToast('Caution: Engagement authority revoked.', true)"
+                                class="w-full px-5 py-3 bg-red-50 text-red-950 border-2 border-red-700 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-200 dark:border-red-500 dark:hover:bg-red-900/60 text-xs font-black font-display uppercase tracking-wider transition-colors cursor-pointer">
+                                Revoke Engagement Authority
+                            </button>
+                        </div>
+
+                        <!-- Interactive Segmented Action Buttons -->
+                        <div>
+                            <span
+                                class="text-xs text-neutral-700 dark:text-neutral-300 block mb-2 font-display uppercase tracking-wider font-extrabold">
+                                Segmented Action Bar
+                            </span>
+                            <div role="group" aria-label="Attestation Reporting Interval" id="segmentedCadenceGroup"
+                                class="flex border-2 border-neutral-800 dark:border-neutral-300 divide-x-2 divide-neutral-800 dark:divide-neutral-300 w-full text-center">
+                                <button type="button" onclick="setSegmentedCadence(this)" aria-pressed="true"
+                                    class="flex-1 py-2.5 bg-black text-white dark:bg-white dark:text-black text-xs font-black uppercase tracking-wider cursor-pointer">Daily</button>
+                                <button type="button" onclick="setSegmentedCadence(this)" aria-pressed="false"
+                                    class="flex-1 py-2.5 bg-white dark:bg-neutral-900 text-neutral-950 dark:text-white hover:bg-neutral-200 dark:hover:bg-neutral-800 text-xs font-bold uppercase tracking-wider cursor-pointer">Weekly</button>
+                                <button type="button" onclick="setSegmentedCadence(this)" aria-pressed="false"
+                                    class="flex-1 py-2.5 bg-white dark:bg-neutral-900 text-neutral-950 dark:text-white hover:bg-neutral-200 dark:hover:bg-neutral-800 text-xs font-bold uppercase tracking-wider cursor-pointer">Quarterly</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 4: ENTERPRISE DATA & CONTENT MANAGEMENT (NON-AGENTIC CRITICALS) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <!-- MODULE COLUMN 1: MULTI-FACET FILTER BAR & FILE INTAKE -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        7. Data Filtering & Document Intake
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 space-y-6 shadow-xs">
+                        <!-- Multi-Facet Filter Toolbar -->
+                        <div class="space-y-3">
+                            <label
+                                class="text-xs font-extrabold uppercase tracking-wider text-neutral-800 dark:text-neutral-200 font-display block">
+                                Facet Filters & Active Chips
+                            </label>
+
+                            <!-- Filter Dropdown Trigger Buttons -->
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button type="button" onclick="showToast('Fiscal Year selector opened.')"
+                                    class="px-2.5 py-1.5 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-400 dark:border-neutral-600 text-xs font-bold font-display uppercase tracking-wider text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5 cursor-pointer">
+                                    <span>FY 2026</span>
+                                    <span class="text-[10px]" aria-hidden="true">▼</span>
+                                </button>
+                                <button type="button" onclick="showToast('Region filter opened.')"
+                                    class="px-2.5 py-1.5 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-400 dark:border-neutral-600 text-xs font-bold font-display uppercase tracking-wider text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5 cursor-pointer">
+                                    <span>Region: Global</span>
+                                    <span class="text-[10px]" aria-hidden="true">▼</span>
+                                </button>
+                            </div>
+
+                            <!-- Active Filter Chips -->
+                            <div class="flex flex-wrap items-center gap-1.5 pt-1" id="filterChipContainer">
+                                <span
+                                    class="inline-flex items-center gap-1 px-2 py-1 bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-950 text-[11px] font-mono font-bold border border-black dark:border-white">
+                                    <span>Status: In Review</span>
+                                    <button type="button" onclick="this.parentElement.remove(); showToast('Filter removed.')" class="hover:text-red-400 dark:hover:text-red-600 cursor-pointer ml-1 font-bold" aria-label="Remove Status filter">✕</button>
+                                </span>
+                                <span
+                                    class="inline-flex items-center gap-1 px-2 py-1 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 text-[11px] font-mono font-bold border border-neutral-400 dark:border-neutral-600">
+                                    <span>Materiality: >$1M</span>
+                                    <button type="button" onclick="this.parentElement.remove(); showToast('Filter removed.')" class="hover:text-red-500 cursor-pointer ml-1 font-bold" aria-label="Remove Materiality filter">✕</button>
+                                </span>
+                                <button type="button" onclick="document.getElementById('filterChipContainer').innerHTML = '<span class=\'text-xs font-mono text-neutral-500\'>No active filters</span>'; showToast('All filters cleared.')"
+                                    class="text-xs font-bold text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white underline cursor-pointer ml-1">
+                                    Reset All
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Document Upload Dropzone -->
+                        <div class="space-y-3 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+                            <label
+                                class="text-xs font-extrabold uppercase tracking-wider text-neutral-800 dark:text-neutral-200 font-display block">
+                                Document Intake Dropzone
+                            </label>
+
+                            <div onclick="showToast('File picker simulation opened.')"
+                                class="p-4 border-2 border-dashed border-neutral-400 dark:border-neutral-600 hover:border-black dark:hover:border-[#86BC25] bg-neutral-50 dark:bg-neutral-950 text-center transition-colors cursor-pointer">
+                                <div class="text-xl mb-1 text-neutral-700 dark:text-neutral-300 font-black">⬆</div>
+                                <p class="text-xs font-bold text-neutral-900 dark:text-neutral-100 font-display">
+                                    Drop workpapers here or <span class="text-[#628f14] dark:text-[#86BC25] underline">browse</span>
+                                </p>
+                                <p class="text-[11px] font-mono text-neutral-500 dark:text-neutral-400 mt-0.5">
+                                    PDF, XLSX, CSV up to 50MB
+                                </p>
+                            </div>
+
+                            <!-- Staged Upload File Item -->
+                            <div class="flex items-center justify-between p-2.5 bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <div class="w-7 h-7 bg-black text-white dark:bg-white dark:text-black font-mono font-bold text-[10px] flex items-center justify-center shrink-0">
+                                        PDF
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-xs font-bold text-neutral-900 dark:text-neutral-100 truncate font-mono">
+                                            Q3_Consolidated_Ledger_Final.pdf
+                                        </p>
+                                        <p class="text-[10px] font-mono text-neutral-500 dark:text-neutral-400">
+                                            4.2 MB • <span class="text-[#628f14] dark:text-[#86BC25] font-bold">Uploaded</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="this.closest('.flex').remove(); showToast('Attachment removed.')" aria-label="Remove attached file" class="text-neutral-400 hover:text-red-600 dark:hover:text-red-400 p-1 font-bold text-xs cursor-pointer">
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE COLUMN 2: ENTITY METADATA & MICRO-METRICS -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        8. Entity Summary & Metric Breakdown
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 space-y-6 shadow-xs">
+
+                        <!-- Entity Metadata Definition List (<dl>) -->
+                        <div>
+                            <div class="flex items-center justify-between pb-2 border-b-2 border-neutral-900 dark:border-neutral-100">
+                                <span class="text-xs font-extrabold font-display uppercase tracking-wider text-neutral-950 dark:text-white">
+                                    Engagement Dossier
+                                </span>
+                                <span class="font-mono text-[11px] font-bold px-1.5 py-0.5 bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200">
+                                    ID: ENG-4892
+                                </span>
+                            </div>
+
+                            <dl class="divide-y divide-neutral-200 dark:divide-neutral-800 text-xs mt-2">
+                                <div class="py-2 flex justify-between items-baseline gap-4">
+                                    <dt class="font-display font-extrabold uppercase text-[11px] text-neutral-600 dark:text-neutral-400 tracking-wider">Legal Entity</dt>
+                                    <dd class="font-bold text-neutral-950 dark:text-white text-right">Apex Global Holdings Ltd.</dd>
+                                </div>
+                                <div class="py-2 flex justify-between items-baseline gap-4">
+                                    <dt class="font-display font-extrabold uppercase text-[11px] text-neutral-600 dark:text-neutral-400 tracking-wider">SEC CIK Code</dt>
+                                    <dd class="font-mono font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-1">
+                                        0001894412
+                                        <button type="button" onclick="navigator.clipboard.writeText('0001894412'); showToast('CIK Code copied!');" class="text-neutral-500 hover:text-black dark:hover:text-white cursor-pointer" title="Copy CIK">📋</button>
+                                    </dd>
+                                </div>
+                                <div class="py-2 flex justify-between items-baseline gap-4">
+                                    <dt class="font-display font-extrabold uppercase text-[11px] text-neutral-600 dark:text-neutral-400 tracking-wider">Attestation Lead</dt>
+                                    <dd class="font-bold text-neutral-950 dark:text-white text-right">R. Vance, Senior Partner</dd>
+                                </div>
+                                <div class="py-2 flex justify-between items-baseline gap-4">
+                                    <dt class="font-display font-extrabold uppercase text-[11px] text-neutral-600 dark:text-neutral-400 tracking-wider">Governance State</dt>
+                                    <dd>
+                                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-300 font-mono text-[10px] font-black border border-emerald-500">
+                                            <span class="w-1.5 h-1.5 bg-[#86BC25]"></span>
+                                            COMPLIANT
+                                        </span>
+                                    </dd>
+                                </div>
+                            </dl>
+                        </div>
+
+                        <!-- Micro-Metric Distribution / Stacked Bar -->
+                        <div class="space-y-2.5 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-extrabold font-display uppercase tracking-wider text-neutral-800 dark:text-neutral-200">
+                                    Workpaper Verification Split
+                                </span>
+                                <span class="text-xs font-mono font-bold text-neutral-900 dark:text-neutral-100">100% (240 Files)</span>
+                            </div>
+
+                            <!-- Stacked Progress Bar -->
+                            <div class="h-3 w-full bg-neutral-200 dark:bg-neutral-800 flex overflow-hidden border border-neutral-300 dark:border-neutral-700">
+                                <div class="bg-[#86BC25] h-full" style="width: 65%;" title="Verified: 65%"></div>
+                                <div class="bg-amber-500 h-full" style="width: 25%;" title="In Review: 25%"></div>
+                                <div class="bg-red-600 h-full" style="width: 10%;" title="Exceptions: 10%"></div>
+                            </div>
+
+                            <!-- Legend -->
+                            <div class="flex items-center justify-between text-[11px] font-mono text-neutral-600 dark:text-neutral-400 pt-1">
+                                <span class="flex items-center gap-1.5">
+                                    <span class="w-2 h-2 bg-[#86BC25]"></span> 65% Passed
+                                </span>
+                                <span class="flex items-center gap-1.5">
+                                    <span class="w-2 h-2 bg-amber-500"></span> 25% Flagged
+                                </span>
+                                <span class="flex items-center gap-1.5">
+                                    <span class="w-2 h-2 bg-red-600"></span> 10% Exception
+                                </span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- MODULE COLUMN 3: OVERLAYS & ACTION MENUS -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        9. Dialog Overlays & Action Menus
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 space-y-6 shadow-xs">
+
+                        <!-- Inline Confirmation Modal Specimen -->
+                        <div class="border-2 border-neutral-900 dark:border-neutral-100 p-4 bg-neutral-100 dark:bg-neutral-950 space-y-3">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-4 h-4 bg-amber-500 text-black font-black flex items-center justify-center text-xs">!</span>
+                                    <h5 class="text-xs font-black uppercase tracking-wider text-neutral-950 dark:text-white font-display">
+                                        Confirm Reclassification
+                                    </h5>
+                                </div>
+                                <span class="text-[10px] font-mono font-bold text-neutral-500">SPECIMEN</span>
+                            </div>
+                            <p class="text-xs text-neutral-700 dark:text-neutral-300 font-medium">
+                                Reclassifying account <code class="font-mono font-bold bg-neutral-200 dark:bg-neutral-800 px-1 text-neutral-900 dark:text-neutral-100">#402-B</code> will trigger an automated ledger lock across 3 active workpapers.
+                            </p>
+                            <div class="flex items-center justify-end gap-2 pt-2 border-t border-neutral-300 dark:border-neutral-800">
+                                <button type="button" onclick="showToast('Action cancelled.')"
+                                    class="px-3 py-1.5 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-200 border border-neutral-400 dark:border-neutral-600 text-xs font-extrabold uppercase font-display cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700">
+                                    Cancel
+                                </button>
+                                <button type="button" onclick="showToast('Reclassification committed.')"
+                                    class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white border border-red-700 text-xs font-extrabold uppercase font-display cursor-pointer">
+                                    Confirm Lock
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Contextual Action Menu / Overflow Menu -->
+                        <div class="space-y-2 pt-2">
+                            <label
+                                class="text-xs font-extrabold uppercase tracking-wider text-neutral-800 dark:text-neutral-200 font-display block">
+                                Contextual Action Menu (Popdown)
+                            </label>
+
+                            <div class="relative inline-block text-left w-full">
+                                <div class="p-1 bg-neutral-950 dark:bg-neutral-900 border-2 border-neutral-900 dark:border-neutral-700 text-white space-y-0.5">
+                                    <button type="button" onclick="showToast('Exporting Dossier PDF...')"
+                                        class="w-full text-left px-3 py-2 text-xs font-bold font-display uppercase tracking-wider text-neutral-200 hover:bg-neutral-800 dark:hover:bg-neutral-800 hover:text-white flex items-center justify-between cursor-pointer">
+                                        <span>📄 Export Dossier (PDF)</span>
+                                        <span class="text-[10px] font-mono text-neutral-400">⌘E</span>
+                                    </button>
+                                    <button type="button" onclick="showToast('Generating AI Summary...')"
+                                        class="w-full text-left px-3 py-2 text-xs font-bold font-display uppercase tracking-wider text-[#86BC25] hover:bg-neutral-800 flex items-center justify-between cursor-pointer">
+                                        <span>⚡ Trigger AI Validation</span>
+                                        <span class="text-[10px] font-mono text-neutral-400">⌘R</span>
+                                    </button>
+                                    <div class="border-t border-neutral-700 my-1"></div>
+                                    <button type="button" onclick="showToast('Archived engagement record.', true)"
+                                        class="w-full text-left px-3 py-2 text-xs font-bold font-display uppercase tracking-wider text-red-400 hover:bg-red-950/60 hover:text-red-300 flex items-center justify-between cursor-pointer">
+                                        <span>🗑 Deactivate Engagement</span>
+                                        <span class="text-[10px] font-mono text-neutral-400">DEL</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ROW 5: EMBEDDED WORKFLOWS & GOVERNANCE (AI-AUGMENTED BUSINESS PATTERNS) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <!-- MODULE COLUMN 1: EMBEDDED AI RECOMMENDATION CARD -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-[#86BC25] pl-2.5 text-neutral-950 dark:text-white">
+                        10. Embedded AI Recommendation Card
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 border-t-4 border-t-[#86BC25] space-y-4 shadow-xs">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 bg-[#86BC25]" aria-hidden="true"></span>
+                                <h5 class="text-xs font-black uppercase tracking-wider text-neutral-950 dark:text-white font-display">
+                                    AI Decision Support
+                                </h5>
+                            </div>
+                            <span class="px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 font-mono text-[10px] font-black text-[#628f14] dark:text-[#86BC25]">
+                                98.4% CONFIDENCE
+                            </span>
+                        </div>
+
+                        <p class="text-xs font-semibold text-neutral-800 dark:text-neutral-200 leading-relaxed">
+                            Automated substantive sampling detected a <span class="text-red-600 dark:text-red-400 font-bold">$142,500 variance</span> between Q3 ERP general ledger and vendor disbursement #4092.
+                        </p>
+
+                        <div class="p-3 bg-neutral-100 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-800 space-y-1.5 text-xs">
+                            <p class="font-extrabold uppercase font-display text-[10px] text-neutral-600 dark:text-neutral-400">Analysis Rationale:</p>
+                            <ul class="space-y-1 text-neutral-700 dark:text-neutral-300 text-[11px] font-medium list-disc list-inside">
+                                <li>Invoice was double-entered across European subsidiaries.</li>
+                                <li>Vendor master file lacks counterparty reciprocal sign-off.</li>
+                                <li>Variance exceeds engagement materiality threshold ($100k).</li>
+                            </ul>
+                        </div>
+
+                        <div class="flex items-center gap-2 pt-2">
+                            <button type="button" onclick="showToast('AI Adjustment applied to ledger.')"
+                                class="flex-1 py-2 bg-neutral-900 hover:bg-black text-white dark:bg-white dark:text-neutral-950 text-xs font-black font-display uppercase tracking-wider cursor-pointer border border-black dark:border-white transition-colors">
+                                Apply Auto-Adjustment
+                            </button>
+                            <button type="button" onclick="showToast('AI recommendation dismissed.')"
+                                class="px-3 py-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:text-black dark:hover:text-white border border-neutral-300 dark:border-neutral-700 text-xs font-extrabold uppercase font-display cursor-pointer">
+                                Override
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE COLUMN 2: HUMAN-IN-THE-LOOP APPROVAL BANNER -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        11. Human-in-the-Loop Governance
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 space-y-4 shadow-xs">
+                        <div class="flex items-center justify-between pb-2 border-b border-neutral-200 dark:border-neutral-800">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 bg-amber-500" aria-hidden="true"></span>
+                                <h5 class="text-xs font-black uppercase tracking-wider text-neutral-950 dark:text-white font-display">
+                                    Sign-Off Authorization Gate
+                                </h5>
+                            </div>
+                            <span class="font-mono text-[10px] font-bold text-amber-700 dark:text-amber-400">STAGE 3 OF 4</span>
+                        </div>
+
+                        <p class="text-xs text-neutral-700 dark:text-neutral-300 font-medium">
+                            Automated agent batch <code class="font-mono font-bold text-neutral-900 dark:text-neutral-100 bg-neutral-200 dark:bg-neutral-800 px-1">#EXEC-772</code> generated statutory SEC filing documents. A designated Lead Partner must inspect and sign before gateway submission.
+                        </p>
+
+                        <!-- Reviewer Assignment Tag Grid -->
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="p-2 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
+                                <span class="text-[10px] font-mono text-neutral-500 uppercase block">Required Lead</span>
+                                <span class="font-bold text-neutral-900 dark:text-white text-xs">Sarah Jenkins (Audit)</span>
+                            </div>
+                            <div class="p-2 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
+                                <span class="text-[10px] font-mono text-neutral-500 uppercase block">Risk Rating</span>
+                                <span class="font-bold text-red-600 dark:text-red-400 text-xs font-mono">HIGH ($4.8M EXP)</span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-2 pt-2">
+                            <button type="button" onclick="showToast('Lead Partner attestation signed and transmitted.')"
+                                class="w-full py-2.5 bg-[#86BC25] hover:bg-[#72a11f] text-black font-display text-xs font-extrabold uppercase tracking-wider cursor-pointer border border-black shadow-xs transition-colors">
+                                ✓ Authorize & Submit Filing
+                            </button>
+                            <button type="button" onclick="showToast('Filing returned for revision with partner comments.')"
+                                class="w-full py-2 bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-neutral-400 dark:border-neutral-600 text-xs font-extrabold uppercase font-display cursor-pointer">
+                                Request Revision
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE COLUMN 3: AUDIT TRAIL / ACTIVITY TIMELINE -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        12. Activity Stream & Audit Trail
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 shadow-xs">
+
+                        <!-- Timeline Stream -->
+                        <ol class="relative border-l-2 border-neutral-300 dark:border-neutral-700 ml-2 space-y-6 my-1">
+                            <!-- Event 1 (Agent) -->
+                            <li class="ml-4">
+                                <span class="absolute -left-[5px] mt-1.5 w-2.5 h-2.5 bg-[#86BC25] border-2 border-white dark:border-neutral-900" aria-hidden="true"></span>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-1.5 py-0.2 bg-black text-white dark:bg-white dark:text-black font-mono text-[9px] font-black uppercase">
+                                        AGENT
+                                    </span>
+                                    <time class="font-mono text-[10px] text-neutral-500 font-bold">14:32:08 UTC</time>
+                                </div>
+                                <h6 class="text-xs font-bold text-neutral-950 dark:text-white mt-1">Autonomous Batch Reconciliation</h6>
+                                <p class="text-[11px] text-neutral-600 dark:text-neutral-400 mt-0.5">Matched 1,420 subledger line items against ERP bank gateway.</p>
+                            </li>
+
+                            <!-- Event 2 (Human) -->
+                            <li class="ml-4">
+                                <span class="absolute -left-[5px] mt-1.5 w-2.5 h-2.5 bg-neutral-900 dark:bg-white border-2 border-white dark:border-neutral-900" aria-hidden="true"></span>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-1.5 py-0.2 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-mono text-[9px] font-black uppercase">
+                                        USER
+                                    </span>
+                                    <time class="font-mono text-[10px] text-neutral-500 font-bold">15:10:44 UTC</time>
+                                </div>
+                                <h6 class="text-xs font-bold text-neutral-950 dark:text-white mt-1">Manual Variance Override</h6>
+                                <p class="text-[11px] text-neutral-600 dark:text-neutral-400 mt-0.5">D. Alvarez approved non-cash amortisation exception of $24,000.</p>
+                            </li>
+
+                            <!-- Event 3 (System Gateway) -->
+                            <li class="ml-4">
+                                <span class="absolute -left-[5px] mt-1.5 w-2.5 h-2.5 bg-neutral-400 dark:bg-neutral-600 border-2 border-white dark:border-neutral-900" aria-hidden="true"></span>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-1.5 py-0.2 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-mono text-[9px] font-black uppercase">
+                                        GATEWAY
+                                    </span>
+                                    <time class="font-mono text-[10px] text-neutral-500 font-bold">16:00:00 UTC</time>
+                                </div>
+                                <h6 class="text-xs font-bold text-neutral-950 dark:text-white mt-1">SEC Cryptographic Hash Stamped</h6>
+                                <p class="text-[11px] font-mono text-neutral-600 dark:text-neutral-400 mt-0.5 truncate">SHA256: 8f9b...a10e (Attestation Verified)</p>
+                            </li>
+                        </ol>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ROW 2: DATA TABLE & NAVIGATION -->
+            <div class="space-y-6 pt-4">
+                <h4
+                    class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                    4. Data Table & Grid Structures
+                </h4>
+
+                <div
+                    class="w-full border-2 border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 overflow-hidden shadow-xs">
+                    <div
+                        class="px-6 py-4 border-b-2 border-neutral-300 dark:border-neutral-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-neutral-100 dark:bg-neutral-950">
+                        <div>
+                            <h5
+                                class="text-sm font-black font-display uppercase tracking-wider text-neutral-950 dark:text-white">
+                                Master Engagement Records
+                            </h5>
+                            <p id="tableResultCount"
+                                class="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+                                Real-time attestation stream showing 3 verified client entities
+                            </p>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="search" id="entitySearchInput" placeholder="Search entity or sector..."
+                                aria-label="Search client entity records" oninput="filterEngagementTable()"
+                                class="px-3 py-1.5 bg-white dark:bg-neutral-900 border-2 border-neutral-400 dark:border-neutral-600 text-xs font-semibold text-neutral-950 dark:text-white placeholder-neutral-500 focus:outline-hidden" />
+                            <button type="button" onclick="showToast('Export initiated: records downloaded as CSV.')"
+                                class="px-4 py-1.5 bg-black text-white dark:bg-white dark:text-black text-xs font-black uppercase tracking-wider cursor-pointer border border-black hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors">
+                                Export CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs font-sans">
+                            <thead
+                                class="bg-neutral-200 dark:bg-neutral-950 border-b-2 border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-neutral-200 font-display uppercase tracking-wider text-[11px]">
+                                <tr>
+                                    <th scope="col" class="py-3.5 px-6 font-extrabold">Engagement Ref</th>
+                                    <th scope="col" class="py-3.5 px-6 font-extrabold">Client Organization</th>
+                                    <th scope="col" class="py-3.5 px-6 font-extrabold">Industry Sector</th>
+                                    <th scope="col" class="py-3.5 px-6 font-extrabold text-right">Fee Basis</th>
+                                    <th scope="col" class="py-3.5 px-6 font-extrabold">Compliance Status</th>
+                                    <th scope="col" class="py-3.5 px-6 font-extrabold text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="engagementTableBody"
+                                class="divide-y-2 divide-neutral-200 dark:divide-neutral-800 text-neutral-950 dark:text-neutral-100">
+                                <tr
+                                    class="engagement-row hover:bg-neutral-100 dark:hover:bg-neutral-800/60 transition-colors">
+                                    <td class="py-4 px-6 font-mono text-[11px] font-bold">ENG-2026-904</td>
+                                    <td class="py-4 px-6 font-extrabold font-display entity-name">Apex Global Logistics
+                                        Inc.</td>
+                                    <td
+                                        class="py-4 px-6 font-medium text-neutral-800 dark:text-neutral-200 entity-sector">
+                                        Transportation & Supply Chain</td>
+                                    <td class="py-4 px-6 text-right font-mono font-bold">$1,450,000</td>
+                                    <td class="py-4 px-6">
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-100 text-emerald-950 border-2 border-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-200 dark:border-emerald-500 text-[10px] font-black uppercase tracking-wider">
+                                            <span class="w-2 h-2 bg-[#86BC25]" aria-hidden="true"></span> Approved
+                                        </span>
+                                    </td>
+                                    <td class="py-4 px-6 text-center">
+                                        <button type="button" onclick="showToast('Opening audit dossier: ENG-2026-904')"
+                                            class="text-xs font-black text-black dark:text-white underline hover:text-[#628f14] dark:hover:text-[#86BC25] cursor-pointer">
+                                            Audit File
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr
+                                    class="engagement-row hover:bg-neutral-100 dark:hover:bg-neutral-800/60 transition-colors">
+                                    <td class="py-4 px-6 font-mono text-[11px] font-bold">ENG-2026-712</td>
+                                    <td class="py-4 px-6 font-extrabold font-display entity-name">Nordic Renewables
+                                        Holding</td>
+                                    <td
+                                        class="py-4 px-6 font-medium text-neutral-800 dark:text-neutral-200 entity-sector">
+                                        Clean
+                                        Energy & Infrastructure</td>
+                                    <td class="py-4 px-6 text-right font-mono font-bold">$880,000</td>
+                                    <td class="py-4 px-6">
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-100 text-amber-950 border-2 border-amber-600 dark:bg-amber-950/60 dark:text-amber-200 dark:border-amber-500 text-[10px] font-black uppercase tracking-wider">
+                                            <span class="w-2 h-2 bg-amber-500" aria-hidden="true"></span> Under Review
+                                        </span>
+                                    </td>
+                                    <td class="py-4 px-6 text-center">
+                                        <button type="button" onclick="showToast('Opening audit dossier: ENG-2026-712')"
+                                            class="text-xs font-black text-black dark:text-white underline hover:text-[#628f14] dark:hover:text-[#86BC25] cursor-pointer">
+                                            Audit File
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr
+                                    class="engagement-row hover:bg-neutral-100 dark:hover:bg-neutral-800/60 transition-colors">
+                                    <td class="py-4 px-6 font-mono text-[11px] font-bold">ENG-2026-339</td>
+                                    <td class="py-4 px-6 font-extrabold font-display entity-name">Sovereign Financial
+                                        Trust</td>
+                                    <td
+                                        class="py-4 px-6 font-medium text-neutral-800 dark:text-neutral-200 entity-sector">
+                                        Banking &
+                                        Asset Custody</td>
+                                    <td class="py-4 px-6 text-right font-mono font-bold">$3,120,000</td>
+                                    <td class="py-4 px-6">
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-red-100 text-red-950 border-2 border-red-700 dark:bg-red-950/60 dark:text-red-200 dark:border-red-500 text-[10px] font-black uppercase tracking-wider">
+                                            <span class="w-2 h-2 bg-red-600" aria-hidden="true"></span> Variance Flag
+                                        </span>
+                                    </td>
+                                    <td class="py-4 px-6 text-center">
+                                        <button type="button"
+                                            onclick="showToast('Opening variance report: ENG-2026-339')"
+                                            class="text-xs font-black text-black dark:text-white underline hover:text-[#628f14] dark:hover:text-[#86BC25] cursor-pointer">
+                                            Audit File
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr id="noResultsRow" class="hidden">
+                                    <td colspan="6"
+                                        class="py-8 text-center text-xs font-bold text-neutral-500 dark:text-neutral-400">
+                                        No client records found matching search query.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Table Footer Pagination (Accessible) -->
+                    <div
+                        class="px-6 py-3.5 bg-neutral-100 dark:bg-neutral-950 border-t-2 border-neutral-300 dark:border-neutral-700 flex items-center justify-between text-xs font-bold text-neutral-800 dark:text-neutral-300">
+                        <span id="paginationSummary">Showing 1-3 of 48 records</span>
+                        <div class="flex items-center gap-1" role="navigation" aria-label="Pagination">
+                            <button type="button" aria-disabled="true"
+                                class="px-3 py-1.5 border-2 border-neutral-400 dark:border-neutral-600 bg-white dark:bg-neutral-900 opacity-40 cursor-not-allowed font-bold"
+                                disabled>Previous</button>
+                            <button type="button" aria-current="page"
+                                class="px-3 py-1.5 border-2 border-black dark:border-white bg-black text-white dark:bg-white dark:text-black font-black">1</button>
+                            <button type="button" onclick="showToast('Navigating to Page 2...')"
+                                class="px-3 py-1.5 border-2 border-neutral-400 dark:border-neutral-600 bg-white dark:bg-neutral-900 hover:bg-neutral-200 dark:hover:bg-neutral-800 cursor-pointer font-bold">2</button>
+                            <button type="button" onclick="showToast('Navigating to Page 3...')"
+                                class="px-3 py-1.5 border-2 border-neutral-400 dark:border-neutral-600 bg-white dark:bg-neutral-900 hover:bg-neutral-200 dark:hover:bg-neutral-800 cursor-pointer font-bold">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 4: ENTERPRISE DATA & CONTENT MANAGEMENT (NON-AGENTIC CRITICALS) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <!-- MODULE COLUMN 1: MULTI-FACET FILTER BAR & FILE INTAKE -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        7. Data Filtering & Document Intake
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 space-y-6 shadow-xs">
+                        <!-- Multi-Facet Filter Toolbar -->
+                        <div class="space-y-3">
+                            <label
+                                class="text-xs font-extrabold uppercase tracking-wider text-neutral-800 dark:text-neutral-200 font-display block">
+                                Facet Filters & Active Chips
+                            </label>
+
+                            <!-- Filter Dropdown Trigger Buttons -->
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button type="button" onclick="showToast('Fiscal Year selector opened.')"
+                                    class="px-2.5 py-1.5 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-400 dark:border-neutral-600 text-xs font-bold font-display uppercase tracking-wider text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5 cursor-pointer">
+                                    <span>FY 2026</span>
+                                    <span class="text-[10px]" aria-hidden="true">▼</span>
+                                </button>
+                                <button type="button" onclick="showToast('Region filter opened.')"
+                                    class="px-2.5 py-1.5 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-400 dark:border-neutral-600 text-xs font-bold font-display uppercase tracking-wider text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5 cursor-pointer">
+                                    <span>Region: Global</span>
+                                    <span class="text-[10px]" aria-hidden="true">▼</span>
+                                </button>
+                            </div>
+
+                            <!-- Active Filter Chips -->
+                            <div class="flex flex-wrap items-center gap-1.5 pt-1" id="filterChipContainer">
+                                <span
+                                    class="inline-flex items-center gap-1 px-2 py-1 bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-950 text-[11px] font-mono font-bold border border-black dark:border-white">
+                                    <span>Status: In Review</span>
+                                    <button type="button" onclick="this.parentElement.remove(); showToast('Filter removed.')" class="hover:text-red-400 dark:hover:text-red-600 cursor-pointer ml-1 font-bold" aria-label="Remove Status filter">✕</button>
+                                </span>
+                                <span
+                                    class="inline-flex items-center gap-1 px-2 py-1 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 text-[11px] font-mono font-bold border border-neutral-400 dark:border-neutral-600">
+                                    <span>Materiality: >$1M</span>
+                                    <button type="button" onclick="this.parentElement.remove(); showToast('Filter removed.')" class="hover:text-red-500 cursor-pointer ml-1 font-bold" aria-label="Remove Materiality filter">✕</button>
+                                </span>
+                                <button type="button" onclick="document.getElementById('filterChipContainer').innerHTML = '<span class=\'text-xs font-mono text-neutral-500\'>No active filters</span>'; showToast('All filters cleared.')"
+                                    class="text-xs font-bold text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white underline cursor-pointer ml-1">
+                                    Reset All
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Document Upload Dropzone -->
+                        <div class="space-y-3 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+                            <label
+                                class="text-xs font-extrabold uppercase tracking-wider text-neutral-800 dark:text-neutral-200 font-display block">
+                                Document Intake Dropzone
+                            </label>
+
+                            <div onclick="showToast('File picker simulation opened.')"
+                                class="p-4 border-2 border-dashed border-neutral-400 dark:border-neutral-600 hover:border-black dark:hover:border-[#86BC25] bg-neutral-50 dark:bg-neutral-950 text-center transition-colors cursor-pointer">
+                                <div class="text-xl mb-1 text-neutral-700 dark:text-neutral-300 font-black">⬆</div>
+                                <p class="text-xs font-bold text-neutral-900 dark:text-neutral-100 font-display">
+                                    Drop workpapers here or <span class="text-[#628f14] dark:text-[#86BC25] underline">browse</span>
+                                </p>
+                                <p class="text-[11px] font-mono text-neutral-500 dark:text-neutral-400 mt-0.5">
+                                    PDF, XLSX, CSV up to 50MB
+                                </p>
+                            </div>
+
+                            <!-- Staged Upload File Item -->
+                            <div class="flex items-center justify-between p-2.5 bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <div class="w-7 h-7 bg-black text-white dark:bg-white dark:text-black font-mono font-bold text-[10px] flex items-center justify-center shrink-0">
+                                        PDF
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-xs font-bold text-neutral-900 dark:text-neutral-100 truncate font-mono">
+                                            Q3_Consolidated_Ledger_Final.pdf
+                                        </p>
+                                        <p class="text-[10px] font-mono text-neutral-500 dark:text-neutral-400">
+                                            4.2 MB • <span class="text-[#628f14] dark:text-[#86BC25] font-bold">Uploaded</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="this.closest('.flex').remove(); showToast('Attachment removed.')" aria-label="Remove attached file" class="text-neutral-400 hover:text-red-600 dark:hover:text-red-400 p-1 font-bold text-xs cursor-pointer">
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE COLUMN 2: ENTITY METADATA & MICRO-METRICS -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        8. Entity Summary & Metric Breakdown
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 space-y-6 shadow-xs">
+
+                        <!-- Entity Metadata Definition List (<dl>) -->
+                        <div>
+                            <div class="flex items-center justify-between pb-2 border-b-2 border-neutral-900 dark:border-neutral-100">
+                                <span class="text-xs font-extrabold font-display uppercase tracking-wider text-neutral-950 dark:text-white">
+                                    Engagement Dossier
+                                </span>
+                                <span class="font-mono text-[11px] font-bold px-1.5 py-0.5 bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200">
+                                    ID: ENG-4892
+                                </span>
+                            </div>
+
+                            <dl class="divide-y divide-neutral-200 dark:divide-neutral-800 text-xs mt-2">
+                                <div class="py-2 flex justify-between items-baseline gap-4">
+                                    <dt class="font-display font-extrabold uppercase text-[11px] text-neutral-600 dark:text-neutral-400 tracking-wider">Legal Entity</dt>
+                                    <dd class="font-bold text-neutral-950 dark:text-white text-right">Apex Global Holdings Ltd.</dd>
+                                </div>
+                                <div class="py-2 flex justify-between items-baseline gap-4">
+                                    <dt class="font-display font-extrabold uppercase text-[11px] text-neutral-600 dark:text-neutral-400 tracking-wider">SEC CIK Code</dt>
+                                    <dd class="font-mono font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-1">
+                                        0001894412
+                                        <button type="button" onclick="navigator.clipboard.writeText('0001894412'); showToast('CIK Code copied!');" class="text-neutral-500 hover:text-black dark:hover:text-white cursor-pointer" title="Copy CIK">📋</button>
+                                    </dd>
+                                </div>
+                                <div class="py-2 flex justify-between items-baseline gap-4">
+                                    <dt class="font-display font-extrabold uppercase text-[11px] text-neutral-600 dark:text-neutral-400 tracking-wider">Attestation Lead</dt>
+                                    <dd class="font-bold text-neutral-950 dark:text-white text-right">R. Vance, Senior Partner</dd>
+                                </div>
+                                <div class="py-2 flex justify-between items-baseline gap-4">
+                                    <dt class="font-display font-extrabold uppercase text-[11px] text-neutral-600 dark:text-neutral-400 tracking-wider">Governance State</dt>
+                                    <dd>
+                                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-300 font-mono text-[10px] font-black border border-emerald-500">
+                                            <span class="w-1.5 h-1.5 bg-[#86BC25]"></span>
+                                            COMPLIANT
+                                        </span>
+                                    </dd>
+                                </div>
+                            </dl>
+                        </div>
+
+                        <!-- Micro-Metric Distribution / Stacked Bar -->
+                        <div class="space-y-2.5 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-extrabold font-display uppercase tracking-wider text-neutral-800 dark:text-neutral-200">
+                                    Workpaper Verification Split
+                                </span>
+                                <span class="text-xs font-mono font-bold text-neutral-900 dark:text-neutral-100">100% (240 Files)</span>
+                            </div>
+
+                            <!-- Stacked Progress Bar -->
+                            <div class="h-3 w-full bg-neutral-200 dark:bg-neutral-800 flex overflow-hidden border border-neutral-300 dark:border-neutral-700">
+                                <div class="bg-[#86BC25] h-full" style="width: 65%;" title="Verified: 65%"></div>
+                                <div class="bg-amber-500 h-full" style="width: 25%;" title="In Review: 25%"></div>
+                                <div class="bg-red-600 h-full" style="width: 10%;" title="Exceptions: 10%"></div>
+                            </div>
+
+                            <!-- Legend -->
+                            <div class="flex items-center justify-between text-[11px] font-mono text-neutral-600 dark:text-neutral-400 pt-1">
+                                <span class="flex items-center gap-1.5">
+                                    <span class="w-2 h-2 bg-[#86BC25]"></span> 65% Passed
+                                </span>
+                                <span class="flex items-center gap-1.5">
+                                    <span class="w-2 h-2 bg-amber-500"></span> 25% Flagged
+                                </span>
+                                <span class="flex items-center gap-1.5">
+                                    <span class="w-2 h-2 bg-red-600"></span> 10% Exception
+                                </span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- MODULE COLUMN 3: OVERLAYS & ACTION MENUS -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        9. Dialog Overlays & Action Menus
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 space-y-6 shadow-xs">
+
+                        <!-- Inline Confirmation Modal Specimen -->
+                        <div class="border-2 border-neutral-900 dark:border-neutral-100 p-4 bg-neutral-100 dark:bg-neutral-950 space-y-3">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-4 h-4 bg-amber-500 text-black font-black flex items-center justify-center text-xs">!</span>
+                                    <h5 class="text-xs font-black uppercase tracking-wider text-neutral-950 dark:text-white font-display">
+                                        Confirm Reclassification
+                                    </h5>
+                                </div>
+                                <span class="text-[10px] font-mono font-bold text-neutral-500">SPECIMEN</span>
+                            </div>
+                            <p class="text-xs text-neutral-700 dark:text-neutral-300 font-medium">
+                                Reclassifying account <code class="font-mono font-bold bg-neutral-200 dark:bg-neutral-800 px-1 text-neutral-900 dark:text-neutral-100">#402-B</code> will trigger an automated ledger lock across 3 active workpapers.
+                            </p>
+                            <div class="flex items-center justify-end gap-2 pt-2 border-t border-neutral-300 dark:border-neutral-800">
+                                <button type="button" onclick="showToast('Action cancelled.')"
+                                    class="px-3 py-1.5 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-200 border border-neutral-400 dark:border-neutral-600 text-xs font-extrabold uppercase font-display cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700">
+                                    Cancel
+                                </button>
+                                <button type="button" onclick="showToast('Reclassification committed.')"
+                                    class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white border border-red-700 text-xs font-extrabold uppercase font-display cursor-pointer">
+                                    Confirm Lock
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Contextual Action Menu / Overflow Menu -->
+                        <div class="space-y-2 pt-2">
+                            <label
+                                class="text-xs font-extrabold uppercase tracking-wider text-neutral-800 dark:text-neutral-200 font-display block">
+                                Contextual Action Menu (Popdown)
+                            </label>
+
+                            <div class="relative inline-block text-left w-full">
+                                <div class="p-1 bg-neutral-950 dark:bg-neutral-900 border-2 border-neutral-900 dark:border-neutral-700 text-white space-y-0.5">
+                                    <button type="button" onclick="showToast('Exporting Dossier PDF...')"
+                                        class="w-full text-left px-3 py-2 text-xs font-bold font-display uppercase tracking-wider text-neutral-200 hover:bg-neutral-800 dark:hover:bg-neutral-800 hover:text-white flex items-center justify-between cursor-pointer">
+                                        <span>📄 Export Dossier (PDF)</span>
+                                        <span class="text-[10px] font-mono text-neutral-400">⌘E</span>
+                                    </button>
+                                    <button type="button" onclick="showToast('Generating AI Summary...')"
+                                        class="w-full text-left px-3 py-2 text-xs font-bold font-display uppercase tracking-wider text-[#86BC25] hover:bg-neutral-800 flex items-center justify-between cursor-pointer">
+                                        <span>⚡ Trigger AI Validation</span>
+                                        <span class="text-[10px] font-mono text-neutral-400">⌘R</span>
+                                    </button>
+                                    <div class="border-t border-neutral-700 my-1"></div>
+                                    <button type="button" onclick="showToast('Archived engagement record.', true)"
+                                        class="w-full text-left px-3 py-2 text-xs font-bold font-display uppercase tracking-wider text-red-400 hover:bg-red-950/60 hover:text-red-300 flex items-center justify-between cursor-pointer">
+                                        <span>🗑 Deactivate Engagement</span>
+                                        <span class="text-[10px] font-mono text-neutral-400">DEL</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ROW 5: EMBEDDED WORKFLOWS & GOVERNANCE (AI-AUGMENTED BUSINESS PATTERNS) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <!-- MODULE COLUMN 1: EMBEDDED AI RECOMMENDATION CARD -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-[#86BC25] pl-2.5 text-neutral-950 dark:text-white">
+                        10. Embedded AI Recommendation Card
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 border-t-4 border-t-[#86BC25] space-y-4 shadow-xs">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 bg-[#86BC25]" aria-hidden="true"></span>
+                                <h5 class="text-xs font-black uppercase tracking-wider text-neutral-950 dark:text-white font-display">
+                                    AI Decision Support
+                                </h5>
+                            </div>
+                            <span class="px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 font-mono text-[10px] font-black text-[#628f14] dark:text-[#86BC25]">
+                                98.4% CONFIDENCE
+                            </span>
+                        </div>
+
+                        <p class="text-xs font-semibold text-neutral-800 dark:text-neutral-200 leading-relaxed">
+                            Automated substantive sampling detected a <span class="text-red-600 dark:text-red-400 font-bold">$142,500 variance</span> between Q3 ERP general ledger and vendor disbursement #4092.
+                        </p>
+
+                        <div class="p-3 bg-neutral-100 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-800 space-y-1.5 text-xs">
+                            <p class="font-extrabold uppercase font-display text-[10px] text-neutral-600 dark:text-neutral-400">Analysis Rationale:</p>
+                            <ul class="space-y-1 text-neutral-700 dark:text-neutral-300 text-[11px] font-medium list-disc list-inside">
+                                <li>Invoice was double-entered across European subsidiaries.</li>
+                                <li>Vendor master file lacks counterparty reciprocal sign-off.</li>
+                                <li>Variance exceeds engagement materiality threshold ($100k).</li>
+                            </ul>
+                        </div>
+
+                        <div class="flex items-center gap-2 pt-2">
+                            <button type="button" onclick="showToast('AI Adjustment applied to ledger.')"
+                                class="flex-1 py-2 bg-neutral-900 hover:bg-black text-white dark:bg-white dark:text-neutral-950 text-xs font-black font-display uppercase tracking-wider cursor-pointer border border-black dark:border-white transition-colors">
+                                Apply Auto-Adjustment
+                            </button>
+                            <button type="button" onclick="showToast('AI recommendation dismissed.')"
+                                class="px-3 py-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:text-black dark:hover:text-white border border-neutral-300 dark:border-neutral-700 text-xs font-extrabold uppercase font-display cursor-pointer">
+                                Override
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE COLUMN 2: HUMAN-IN-THE-LOOP APPROVAL BANNER -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        11. Human-in-the-Loop Governance
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 space-y-4 shadow-xs">
+                        <div class="flex items-center justify-between pb-2 border-b border-neutral-200 dark:border-neutral-800">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 bg-amber-500" aria-hidden="true"></span>
+                                <h5 class="text-xs font-black uppercase tracking-wider text-neutral-950 dark:text-white font-display">
+                                    Sign-Off Authorization Gate
+                                </h5>
+                            </div>
+                            <span class="font-mono text-[10px] font-bold text-amber-700 dark:text-amber-400">STAGE 3 OF 4</span>
+                        </div>
+
+                        <p class="text-xs text-neutral-700 dark:text-neutral-300 font-medium">
+                            Automated agent batch <code class="font-mono font-bold text-neutral-900 dark:text-neutral-100 bg-neutral-200 dark:bg-neutral-800 px-1">#EXEC-772</code> generated statutory SEC filing documents. A designated Lead Partner must inspect and sign before gateway submission.
+                        </p>
+
+                        <!-- Reviewer Assignment Tag Grid -->
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="p-2 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
+                                <span class="text-[10px] font-mono text-neutral-500 uppercase block">Required Lead</span>
+                                <span class="font-bold text-neutral-900 dark:text-white text-xs">Sarah Jenkins (Audit)</span>
+                            </div>
+                            <div class="p-2 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
+                                <span class="text-[10px] font-mono text-neutral-500 uppercase block">Risk Rating</span>
+                                <span class="font-bold text-red-600 dark:text-red-400 text-xs font-mono">HIGH ($4.8M EXP)</span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-2 pt-2">
+                            <button type="button" onclick="showToast('Lead Partner attestation signed and transmitted.')"
+                                class="w-full py-2.5 bg-[#86BC25] hover:bg-[#72a11f] text-black font-display text-xs font-extrabold uppercase tracking-wider cursor-pointer border border-black shadow-xs transition-colors">
+                                ✓ Authorize & Submit Filing
+                            </button>
+                            <button type="button" onclick="showToast('Filing returned for revision with partner comments.')"
+                                class="w-full py-2 bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-neutral-400 dark:border-neutral-600 text-xs font-extrabold uppercase font-display cursor-pointer">
+                                Request Revision
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE COLUMN 3: AUDIT TRAIL / ACTIVITY TIMELINE -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        12. Activity Stream & Audit Trail
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 shadow-xs">
+
+                        <!-- Timeline Stream -->
+                        <ol class="relative border-l-2 border-neutral-300 dark:border-neutral-700 ml-2 space-y-6 my-1">
+                            <!-- Event 1 (Agent) -->
+                            <li class="ml-4">
+                                <span class="absolute -left-[5px] mt-1.5 w-2.5 h-2.5 bg-[#86BC25] border-2 border-white dark:border-neutral-900" aria-hidden="true"></span>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-1.5 py-0.2 bg-black text-white dark:bg-white dark:text-black font-mono text-[9px] font-black uppercase">
+                                        AGENT
+                                    </span>
+                                    <time class="font-mono text-[10px] text-neutral-500 font-bold">14:32:08 UTC</time>
+                                </div>
+                                <h6 class="text-xs font-bold text-neutral-950 dark:text-white mt-1">Autonomous Batch Reconciliation</h6>
+                                <p class="text-[11px] text-neutral-600 dark:text-neutral-400 mt-0.5">Matched 1,420 subledger line items against ERP bank gateway.</p>
+                            </li>
+
+                            <!-- Event 2 (Human) -->
+                            <li class="ml-4">
+                                <span class="absolute -left-[5px] mt-1.5 w-2.5 h-2.5 bg-neutral-900 dark:bg-white border-2 border-white dark:border-neutral-900" aria-hidden="true"></span>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-1.5 py-0.2 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-mono text-[9px] font-black uppercase">
+                                        USER
+                                    </span>
+                                    <time class="font-mono text-[10px] text-neutral-500 font-bold">15:10:44 UTC</time>
+                                </div>
+                                <h6 class="text-xs font-bold text-neutral-950 dark:text-white mt-1">Manual Variance Override</h6>
+                                <p class="text-[11px] text-neutral-600 dark:text-neutral-400 mt-0.5">D. Alvarez approved non-cash amortisation exception of $24,000.</p>
+                            </li>
+
+                            <!-- Event 3 (System Gateway) -->
+                            <li class="ml-4">
+                                <span class="absolute -left-[5px] mt-1.5 w-2.5 h-2.5 bg-neutral-400 dark:bg-neutral-600 border-2 border-white dark:border-neutral-900" aria-hidden="true"></span>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-1.5 py-0.2 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-mono text-[9px] font-black uppercase">
+                                        GATEWAY
+                                    </span>
+                                    <time class="font-mono text-[10px] text-neutral-500 font-bold">16:00:00 UTC</time>
+                                </div>
+                                <h6 class="text-xs font-bold text-neutral-950 dark:text-white mt-1">SEC Cryptographic Hash Stamped</h6>
+                                <p class="text-[11px] font-mono text-neutral-600 dark:text-neutral-400 mt-0.5 truncate">SHA256: 8f9b...a10e (Attestation Verified)</p>
+                            </li>
+                        </ol>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ROW 3: NAVIGATION, TABS & STEPPERS -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+                <!-- Navigation Tabs & Stepper -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        5. Wayfinding, Tabs & Steppers
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 space-y-6 shadow-xs">
+                        <!-- Breadcrumbs (Accessible) -->
+                        <div>
+                            <span
+                                class="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 block mb-2 font-display">
+                                Breadcrumb Hierarchy
+                            </span>
+                            <nav aria-label="Audit Dossier Breadcrumb"
+                                class="flex items-center gap-2 text-xs font-display uppercase tracking-wider">
+                                <a href="#assurance"
+                                    class="text-neutral-700 dark:text-neutral-300 hover:text-black dark:hover:text-white font-bold underline">Assurance</a>
+                                <span class="text-neutral-400 dark:text-neutral-500 font-black"
+                                    aria-hidden="true">/</span>
+                                <a href="#north-america"
+                                    class="text-neutral-700 dark:text-neutral-300 hover:text-black dark:hover:text-white font-bold underline">North
+                                    America</a>
+                                <span class="text-neutral-400 dark:text-neutral-500 font-black"
+                                    aria-hidden="true">/</span>
+                                <span class="font-black text-neutral-950 dark:text-white" aria-current="location">Tier 1
+                                    Banking Audit</span>
+                            </nav>
+                        </div>
+
+                        <!-- Underline Enterprise Tabs (Interactive + Accessible) -->
+                        <div>
+                            <span
+                                class="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 block mb-2 font-display">
+                                Corporate Underline Tabs
+                            </span>
+                            <div role="tablist" aria-label="Audit Procedures Workpapers" id="underlineTabGroup"
+                                class="border-b-2 border-neutral-300 dark:border-neutral-700 flex gap-6">
+                                <button type="button" role="tab" id="tab-ledger" aria-selected="true"
+                                    onclick="switchUnderlineTab(this)"
+                                    class="tab-btn pb-2.5 text-xs font-black font-display uppercase tracking-wider text-neutral-950 dark:text-white border-b-4 border-[#86BC25] cursor-pointer">
+                                    General Ledger
+                                </button>
+                                <button type="button" role="tab" id="tab-substantive" aria-selected="false"
+                                    onclick="switchUnderlineTab(this)"
+                                    class="tab-btn pb-2.5 text-xs font-bold font-display uppercase tracking-wider text-neutral-600 hover:text-neutral-950 dark:text-neutral-400 dark:hover:text-white border-b-4 border-transparent transition-colors cursor-pointer">
+                                    Substantive Testing
+                                </button>
+                                <button type="button" role="tab" id="tab-signoff" aria-selected="false"
+                                    onclick="switchUnderlineTab(this)"
+                                    class="tab-btn pb-2.5 text-xs font-bold font-display uppercase tracking-wider text-neutral-600 hover:text-neutral-950 dark:text-neutral-400 dark:hover:text-white border-b-4 border-transparent transition-colors cursor-pointer">
+                                    Partner Sign-Off
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Process Stepper (Semantic List & Step State) -->
+                        <div>
+                            <span
+                                class="text-xs font-extrabold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 block mb-2 font-display">
+                                Audit Workflow Stepper
+                            </span>
+                            <ol
+                                class="grid grid-cols-3 border-2 border-neutral-300 dark:border-neutral-700 divide-x-2 divide-neutral-300 dark:divide-neutral-700 text-xs">
+                                <li class="p-3 border-t-4 border-[#86BC25] bg-neutral-100 dark:bg-neutral-800/40">
+                                    <span
+                                        class="text-[10px] font-mono text-[#4c750b] dark:text-[#86BC25] font-black block">01
+                                        • COMPLETE</span>
+                                    <span
+                                        class="font-black text-neutral-950 dark:text-white block mt-0.5">Planning</span>
+                                </li>
+                                <li class="p-3 border-t-4 border-black dark:border-white bg-neutral-50 dark:bg-neutral-900"
+                                    aria-current="step">
+                                    <span
+                                        class="text-[10px] font-mono text-neutral-950 dark:text-white font-black block">02
+                                        • ACTIVE</span>
+                                    <span
+                                        class="font-black text-neutral-950 dark:text-white block mt-0.5">Execution</span>
+                                </li>
+                                <li
+                                    class="p-3 border-t-4 border-neutral-300 dark:border-neutral-800 bg-neutral-200/50 dark:bg-neutral-950">
+                                    <span
+                                        class="text-[10px] font-mono text-neutral-600 dark:text-neutral-400 font-bold block">03
+                                        • QUEUED</span>
+                                    <span
+                                        class="font-bold text-neutral-700 dark:text-neutral-300 block mt-0.5">Issuance</span>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feedback & Alerts -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        6. Alert Banners & Notifications
+                    </h4>
+
+                    <div class="space-y-4">
+                        <!-- Success Banner -->
+                        <div role="status"
+                            class="p-4 bg-emerald-50 dark:bg-neutral-900 border-2 border-emerald-600 dark:border-emerald-500 border-l-6 border-l-[#86BC25] shadow-xs">
+                            <div class="flex items-start gap-3">
+                                <div class="text-[#4c750b] dark:text-[#86BC25] font-black text-base select-none"
+                                    aria-hidden="true">✓</div>
+                                <div>
+                                    <h5
+                                        class="text-xs font-black uppercase tracking-wider text-emerald-950 dark:text-emerald-200 font-display">
+                                        Attestation File Verified
+                                    </h5>
+                                    <p class="text-xs font-semibold text-emerald-900 dark:text-emerald-300 mt-0.5">
+                                        Cryptographic audit signature approved and registered with SEC gateway.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Warning Banner -->
+                        <div role="alert"
+                            class="p-4 bg-amber-50 dark:bg-neutral-900 border-2 border-amber-600 dark:border-amber-500 border-l-6 border-l-amber-500 shadow-xs">
+                            <div class="flex items-start gap-3">
+                                <div class="text-amber-800 dark:text-amber-400 font-black text-base select-none"
+                                    aria-hidden="true">⚠</div>
+                                <div>
+                                    <h5
+                                        class="text-xs font-black uppercase tracking-wider text-amber-950 dark:text-amber-200 font-display">
+                                        Substantive Threshold Variance
+                                    </h5>
+                                    <p class="text-xs font-semibold text-amber-900 dark:text-amber-300 mt-0.5">
+                                        Sampling exceeded standard deviation limit of 0.05% across 2 batches.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Critical Banner -->
+                        <div role="alert"
+                            class="p-4 bg-red-50 dark:bg-neutral-900 border-2 border-red-700 dark:border-red-500 border-l-6 border-l-red-600 shadow-xs">
+                            <div class="flex items-start gap-3">
+                                <div class="text-red-700 dark:text-red-400 font-black text-base select-none"
+                                    aria-hidden="true">✕</div>
+                                <div>
+                                    <h5
+                                        class="text-xs font-black uppercase tracking-wider text-red-950 dark:text-red-200 font-display">
+                                        SEC Disclosure Lockout
+                                    </h5>
+                                    <p class="text-xs font-semibold text-red-900 dark:text-red-300 mt-0.5">
+                                        Mandatory dual-partner authorization is pending review. Engagement frozen.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Skeleton Loading State -->
+                        <div aria-hidden="true"
+                            class="p-4 bg-white dark:bg-neutral-900 border-2 border-neutral-300 dark:border-neutral-700 space-y-2.5 animate-pulse">
+                            <div class="h-3.5 bg-neutral-300 dark:bg-neutral-700 w-1/4"></div>
+                            <div class="h-6 bg-neutral-400 dark:bg-neutral-600 w-1/2"></div>
+                            <div class="h-2.5 bg-neutral-300 dark:bg-neutral-700 w-full"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 4: ENTERPRISE DATA & CONTENT MANAGEMENT (NON-AGENTIC CRITICALS) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <!-- MODULE COLUMN 1: MULTI-FACET FILTER BAR & FILE INTAKE -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        7. Data Filtering & Document Intake
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 space-y-6 shadow-xs">
+                        <!-- Multi-Facet Filter Toolbar -->
+                        <div class="space-y-3">
+                            <label
+                                class="text-xs font-extrabold uppercase tracking-wider text-neutral-800 dark:text-neutral-200 font-display block">
+                                Facet Filters & Active Chips
+                            </label>
+
+                            <!-- Filter Dropdown Trigger Buttons -->
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button type="button" onclick="showToast('Fiscal Year selector opened.')"
+                                    class="px-2.5 py-1.5 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-400 dark:border-neutral-600 text-xs font-bold font-display uppercase tracking-wider text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5 cursor-pointer">
+                                    <span>FY 2026</span>
+                                    <span class="text-[10px]" aria-hidden="true">▼</span>
+                                </button>
+                                <button type="button" onclick="showToast('Region filter opened.')"
+                                    class="px-2.5 py-1.5 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-400 dark:border-neutral-600 text-xs font-bold font-display uppercase tracking-wider text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5 cursor-pointer">
+                                    <span>Region: Global</span>
+                                    <span class="text-[10px]" aria-hidden="true">▼</span>
+                                </button>
+                            </div>
+
+                            <!-- Active Filter Chips -->
+                            <div class="flex flex-wrap items-center gap-1.5 pt-1" id="filterChipContainer">
+                                <span
+                                    class="inline-flex items-center gap-1 px-2 py-1 bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-950 text-[11px] font-mono font-bold border border-black dark:border-white">
+                                    <span>Status: In Review</span>
+                                    <button type="button" onclick="this.parentElement.remove(); showToast('Filter removed.')" class="hover:text-red-400 dark:hover:text-red-600 cursor-pointer ml-1 font-bold" aria-label="Remove Status filter">✕</button>
+                                </span>
+                                <span
+                                    class="inline-flex items-center gap-1 px-2 py-1 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 text-[11px] font-mono font-bold border border-neutral-400 dark:border-neutral-600">
+                                    <span>Materiality: >$1M</span>
+                                    <button type="button" onclick="this.parentElement.remove(); showToast('Filter removed.')" class="hover:text-red-500 cursor-pointer ml-1 font-bold" aria-label="Remove Materiality filter">✕</button>
+                                </span>
+                                <button type="button" onclick="document.getElementById('filterChipContainer').innerHTML = '<span class=\'text-xs font-mono text-neutral-500\'>No active filters</span>'; showToast('All filters cleared.')"
+                                    class="text-xs font-bold text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white underline cursor-pointer ml-1">
+                                    Reset All
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Document Upload Dropzone -->
+                        <div class="space-y-3 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+                            <label
+                                class="text-xs font-extrabold uppercase tracking-wider text-neutral-800 dark:text-neutral-200 font-display block">
+                                Document Intake Dropzone
+                            </label>
+
+                            <div onclick="showToast('File picker simulation opened.')"
+                                class="p-4 border-2 border-dashed border-neutral-400 dark:border-neutral-600 hover:border-black dark:hover:border-[#86BC25] bg-neutral-50 dark:bg-neutral-950 text-center transition-colors cursor-pointer">
+                                <div class="text-xl mb-1 text-neutral-700 dark:text-neutral-300 font-black">⬆</div>
+                                <p class="text-xs font-bold text-neutral-900 dark:text-neutral-100 font-display">
+                                    Drop workpapers here or <span class="text-[#628f14] dark:text-[#86BC25] underline">browse</span>
+                                </p>
+                                <p class="text-[11px] font-mono text-neutral-500 dark:text-neutral-400 mt-0.5">
+                                    PDF, XLSX, CSV up to 50MB
+                                </p>
+                            </div>
+
+                            <!-- Staged Upload File Item -->
+                            <div class="flex items-center justify-between p-2.5 bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <div class="w-7 h-7 bg-black text-white dark:bg-white dark:text-black font-mono font-bold text-[10px] flex items-center justify-center shrink-0">
+                                        PDF
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-xs font-bold text-neutral-900 dark:text-neutral-100 truncate font-mono">
+                                            Q3_Consolidated_Ledger_Final.pdf
+                                        </p>
+                                        <p class="text-[10px] font-mono text-neutral-500 dark:text-neutral-400">
+                                            4.2 MB • <span class="text-[#628f14] dark:text-[#86BC25] font-bold">Uploaded</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="this.closest('.flex').remove(); showToast('Attachment removed.')" aria-label="Remove attached file" class="text-neutral-400 hover:text-red-600 dark:hover:text-red-400 p-1 font-bold text-xs cursor-pointer">
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE COLUMN 2: ENTITY METADATA & MICRO-METRICS -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        8. Entity Summary & Metric Breakdown
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 space-y-6 shadow-xs">
+
+                        <!-- Entity Metadata Definition List (<dl>) -->
+                        <div>
+                            <div class="flex items-center justify-between pb-2 border-b-2 border-neutral-900 dark:border-neutral-100">
+                                <span class="text-xs font-extrabold font-display uppercase tracking-wider text-neutral-950 dark:text-white">
+                                    Engagement Dossier
+                                </span>
+                                <span class="font-mono text-[11px] font-bold px-1.5 py-0.5 bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200">
+                                    ID: ENG-4892
+                                </span>
+                            </div>
+
+                            <dl class="divide-y divide-neutral-200 dark:divide-neutral-800 text-xs mt-2">
+                                <div class="py-2 flex justify-between items-baseline gap-4">
+                                    <dt class="font-display font-extrabold uppercase text-[11px] text-neutral-600 dark:text-neutral-400 tracking-wider">Legal Entity</dt>
+                                    <dd class="font-bold text-neutral-950 dark:text-white text-right">Apex Global Holdings Ltd.</dd>
+                                </div>
+                                <div class="py-2 flex justify-between items-baseline gap-4">
+                                    <dt class="font-display font-extrabold uppercase text-[11px] text-neutral-600 dark:text-neutral-400 tracking-wider">SEC CIK Code</dt>
+                                    <dd class="font-mono font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-1">
+                                        0001894412
+                                        <button type="button" onclick="navigator.clipboard.writeText('0001894412'); showToast('CIK Code copied!');" class="text-neutral-500 hover:text-black dark:hover:text-white cursor-pointer" title="Copy CIK">📋</button>
+                                    </dd>
+                                </div>
+                                <div class="py-2 flex justify-between items-baseline gap-4">
+                                    <dt class="font-display font-extrabold uppercase text-[11px] text-neutral-600 dark:text-neutral-400 tracking-wider">Attestation Lead</dt>
+                                    <dd class="font-bold text-neutral-950 dark:text-white text-right">R. Vance, Senior Partner</dd>
+                                </div>
+                                <div class="py-2 flex justify-between items-baseline gap-4">
+                                    <dt class="font-display font-extrabold uppercase text-[11px] text-neutral-600 dark:text-neutral-400 tracking-wider">Governance State</dt>
+                                    <dd>
+                                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-300 font-mono text-[10px] font-black border border-emerald-500">
+                                            <span class="w-1.5 h-1.5 bg-[#86BC25]"></span>
+                                            COMPLIANT
+                                        </span>
+                                    </dd>
+                                </div>
+                            </dl>
+                        </div>
+
+                        <!-- Micro-Metric Distribution / Stacked Bar -->
+                        <div class="space-y-2.5 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-extrabold font-display uppercase tracking-wider text-neutral-800 dark:text-neutral-200">
+                                    Workpaper Verification Split
+                                </span>
+                                <span class="text-xs font-mono font-bold text-neutral-900 dark:text-neutral-100">100% (240 Files)</span>
+                            </div>
+
+                            <!-- Stacked Progress Bar -->
+                            <div class="h-3 w-full bg-neutral-200 dark:bg-neutral-800 flex overflow-hidden border border-neutral-300 dark:border-neutral-700">
+                                <div class="bg-[#86BC25] h-full" style="width: 65%;" title="Verified: 65%"></div>
+                                <div class="bg-amber-500 h-full" style="width: 25%;" title="In Review: 25%"></div>
+                                <div class="bg-red-600 h-full" style="width: 10%;" title="Exceptions: 10%"></div>
+                            </div>
+
+                            <!-- Legend -->
+                            <div class="flex items-center justify-between text-[11px] font-mono text-neutral-600 dark:text-neutral-400 pt-1">
+                                <span class="flex items-center gap-1.5">
+                                    <span class="w-2 h-2 bg-[#86BC25]"></span> 65% Passed
+                                </span>
+                                <span class="flex items-center gap-1.5">
+                                    <span class="w-2 h-2 bg-amber-500"></span> 25% Flagged
+                                </span>
+                                <span class="flex items-center gap-1.5">
+                                    <span class="w-2 h-2 bg-red-600"></span> 10% Exception
+                                </span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- MODULE COLUMN 3: OVERLAYS & ACTION MENUS -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        9. Dialog Overlays & Action Menus
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 space-y-6 shadow-xs">
+
+                        <!-- Inline Confirmation Modal Specimen -->
+                        <div class="border-2 border-neutral-900 dark:border-neutral-100 p-4 bg-neutral-100 dark:bg-neutral-950 space-y-3">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-4 h-4 bg-amber-500 text-black font-black flex items-center justify-center text-xs">!</span>
+                                    <h5 class="text-xs font-black uppercase tracking-wider text-neutral-950 dark:text-white font-display">
+                                        Confirm Reclassification
+                                    </h5>
+                                </div>
+                                <span class="text-[10px] font-mono font-bold text-neutral-500">SPECIMEN</span>
+                            </div>
+                            <p class="text-xs text-neutral-700 dark:text-neutral-300 font-medium">
+                                Reclassifying account <code class="font-mono font-bold bg-neutral-200 dark:bg-neutral-800 px-1 text-neutral-900 dark:text-neutral-100">#402-B</code> will trigger an automated ledger lock across 3 active workpapers.
+                            </p>
+                            <div class="flex items-center justify-end gap-2 pt-2 border-t border-neutral-300 dark:border-neutral-800">
+                                <button type="button" onclick="showToast('Action cancelled.')"
+                                    class="px-3 py-1.5 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-200 border border-neutral-400 dark:border-neutral-600 text-xs font-extrabold uppercase font-display cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700">
+                                    Cancel
+                                </button>
+                                <button type="button" onclick="showToast('Reclassification committed.')"
+                                    class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white border border-red-700 text-xs font-extrabold uppercase font-display cursor-pointer">
+                                    Confirm Lock
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Contextual Action Menu / Overflow Menu -->
+                        <div class="space-y-2 pt-2">
+                            <label
+                                class="text-xs font-extrabold uppercase tracking-wider text-neutral-800 dark:text-neutral-200 font-display block">
+                                Contextual Action Menu (Popdown)
+                            </label>
+
+                            <div class="relative inline-block text-left w-full">
+                                <div class="p-1 bg-neutral-950 dark:bg-neutral-900 border-2 border-neutral-900 dark:border-neutral-700 text-white space-y-0.5">
+                                    <button type="button" onclick="showToast('Exporting Dossier PDF...')"
+                                        class="w-full text-left px-3 py-2 text-xs font-bold font-display uppercase tracking-wider text-neutral-200 hover:bg-neutral-800 dark:hover:bg-neutral-800 hover:text-white flex items-center justify-between cursor-pointer">
+                                        <span>📄 Export Dossier (PDF)</span>
+                                        <span class="text-[10px] font-mono text-neutral-400">⌘E</span>
+                                    </button>
+                                    <button type="button" onclick="showToast('Generating AI Summary...')"
+                                        class="w-full text-left px-3 py-2 text-xs font-bold font-display uppercase tracking-wider text-[#86BC25] hover:bg-neutral-800 flex items-center justify-between cursor-pointer">
+                                        <span>⚡ Trigger AI Validation</span>
+                                        <span class="text-[10px] font-mono text-neutral-400">⌘R</span>
+                                    </button>
+                                    <div class="border-t border-neutral-700 my-1"></div>
+                                    <button type="button" onclick="showToast('Archived engagement record.', true)"
+                                        class="w-full text-left px-3 py-2 text-xs font-bold font-display uppercase tracking-wider text-red-400 hover:bg-red-950/60 hover:text-red-300 flex items-center justify-between cursor-pointer">
+                                        <span>🗑 Deactivate Engagement</span>
+                                        <span class="text-[10px] font-mono text-neutral-400">DEL</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ROW 5: EMBEDDED WORKFLOWS & GOVERNANCE (AI-AUGMENTED BUSINESS PATTERNS) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <!-- MODULE COLUMN 1: EMBEDDED AI RECOMMENDATION CARD -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-[#86BC25] pl-2.5 text-neutral-950 dark:text-white">
+                        10. Embedded AI Recommendation Card
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 border-t-4 border-t-[#86BC25] space-y-4 shadow-xs">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 bg-[#86BC25]" aria-hidden="true"></span>
+                                <h5 class="text-xs font-black uppercase tracking-wider text-neutral-950 dark:text-white font-display">
+                                    AI Decision Support
+                                </h5>
+                            </div>
+                            <span class="px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 font-mono text-[10px] font-black text-[#628f14] dark:text-[#86BC25]">
+                                98.4% CONFIDENCE
+                            </span>
+                        </div>
+
+                        <p class="text-xs font-semibold text-neutral-800 dark:text-neutral-200 leading-relaxed">
+                            Automated substantive sampling detected a <span class="text-red-600 dark:text-red-400 font-bold">$142,500 variance</span> between Q3 ERP general ledger and vendor disbursement #4092.
+                        </p>
+
+                        <div class="p-3 bg-neutral-100 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-800 space-y-1.5 text-xs">
+                            <p class="font-extrabold uppercase font-display text-[10px] text-neutral-600 dark:text-neutral-400">Analysis Rationale:</p>
+                            <ul class="space-y-1 text-neutral-700 dark:text-neutral-300 text-[11px] font-medium list-disc list-inside">
+                                <li>Invoice was double-entered across European subsidiaries.</li>
+                                <li>Vendor master file lacks counterparty reciprocal sign-off.</li>
+                                <li>Variance exceeds engagement materiality threshold ($100k).</li>
+                            </ul>
+                        </div>
+
+                        <div class="flex items-center gap-2 pt-2">
+                            <button type="button" onclick="showToast('AI Adjustment applied to ledger.')"
+                                class="flex-1 py-2 bg-neutral-900 hover:bg-black text-white dark:bg-white dark:text-neutral-950 text-xs font-black font-display uppercase tracking-wider cursor-pointer border border-black dark:border-white transition-colors">
+                                Apply Auto-Adjustment
+                            </button>
+                            <button type="button" onclick="showToast('AI recommendation dismissed.')"
+                                class="px-3 py-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:text-black dark:hover:text-white border border-neutral-300 dark:border-neutral-700 text-xs font-extrabold uppercase font-display cursor-pointer">
+                                Override
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE COLUMN 2: HUMAN-IN-THE-LOOP APPROVAL BANNER -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        11. Human-in-the-Loop Governance
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 space-y-4 shadow-xs">
+                        <div class="flex items-center justify-between pb-2 border-b border-neutral-200 dark:border-neutral-800">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 bg-amber-500" aria-hidden="true"></span>
+                                <h5 class="text-xs font-black uppercase tracking-wider text-neutral-950 dark:text-white font-display">
+                                    Sign-Off Authorization Gate
+                                </h5>
+                            </div>
+                            <span class="font-mono text-[10px] font-bold text-amber-700 dark:text-amber-400">STAGE 3 OF 4</span>
+                        </div>
+
+                        <p class="text-xs text-neutral-700 dark:text-neutral-300 font-medium">
+                            Automated agent batch <code class="font-mono font-bold text-neutral-900 dark:text-neutral-100 bg-neutral-200 dark:bg-neutral-800 px-1">#EXEC-772</code> generated statutory SEC filing documents. A designated Lead Partner must inspect and sign before gateway submission.
+                        </p>
+
+                        <!-- Reviewer Assignment Tag Grid -->
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="p-2 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
+                                <span class="text-[10px] font-mono text-neutral-500 uppercase block">Required Lead</span>
+                                <span class="font-bold text-neutral-900 dark:text-white text-xs">Sarah Jenkins (Audit)</span>
+                            </div>
+                            <div class="p-2 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
+                                <span class="text-[10px] font-mono text-neutral-500 uppercase block">Risk Rating</span>
+                                <span class="font-bold text-red-600 dark:text-red-400 text-xs font-mono">HIGH ($4.8M EXP)</span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-2 pt-2">
+                            <button type="button" onclick="showToast('Lead Partner attestation signed and transmitted.')"
+                                class="w-full py-2.5 bg-[#86BC25] hover:bg-[#72a11f] text-black font-display text-xs font-extrabold uppercase tracking-wider cursor-pointer border border-black shadow-xs transition-colors">
+                                ✓ Authorize & Submit Filing
+                            </button>
+                            <button type="button" onclick="showToast('Filing returned for revision with partner comments.')"
+                                class="w-full py-2 bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-neutral-400 dark:border-neutral-600 text-xs font-extrabold uppercase font-display cursor-pointer">
+                                Request Revision
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODULE COLUMN 3: AUDIT TRAIL / ACTIVITY TIMELINE -->
+                <div class="space-y-6">
+                    <h4
+                        class="text-sm font-extrabold font-display uppercase border-l-4 border-black dark:border-white pl-2.5 text-neutral-950 dark:text-white">
+                        12. Activity Stream & Audit Trail
+                    </h4>
+
+                    <div
+                        class="bg-white dark:bg-neutral-900 p-6 border-2 border-neutral-300 dark:border-neutral-700 shadow-xs">
+
+                        <!-- Timeline Stream -->
+                        <ol class="relative border-l-2 border-neutral-300 dark:border-neutral-700 ml-2 space-y-6 my-1">
+                            <!-- Event 1 (Agent) -->
+                            <li class="ml-4">
+                                <span class="absolute -left-[5px] mt-1.5 w-2.5 h-2.5 bg-[#86BC25] border-2 border-white dark:border-neutral-900" aria-hidden="true"></span>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-1.5 py-0.2 bg-black text-white dark:bg-white dark:text-black font-mono text-[9px] font-black uppercase">
+                                        AGENT
+                                    </span>
+                                    <time class="font-mono text-[10px] text-neutral-500 font-bold">14:32:08 UTC</time>
+                                </div>
+                                <h6 class="text-xs font-bold text-neutral-950 dark:text-white mt-1">Autonomous Batch Reconciliation</h6>
+                                <p class="text-[11px] text-neutral-600 dark:text-neutral-400 mt-0.5">Matched 1,420 subledger line items against ERP bank gateway.</p>
+                            </li>
+
+                            <!-- Event 2 (Human) -->
+                            <li class="ml-4">
+                                <span class="absolute -left-[5px] mt-1.5 w-2.5 h-2.5 bg-neutral-900 dark:bg-white border-2 border-white dark:border-neutral-900" aria-hidden="true"></span>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-1.5 py-0.2 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-mono text-[9px] font-black uppercase">
+                                        USER
+                                    </span>
+                                    <time class="font-mono text-[10px] text-neutral-500 font-bold">15:10:44 UTC</time>
+                                </div>
+                                <h6 class="text-xs font-bold text-neutral-950 dark:text-white mt-1">Manual Variance Override</h6>
+                                <p class="text-[11px] text-neutral-600 dark:text-neutral-400 mt-0.5">D. Alvarez approved non-cash amortisation exception of $24,000.</p>
+                            </li>
+
+                            <!-- Event 3 (System Gateway) -->
+                            <li class="ml-4">
+                                <span class="absolute -left-[5px] mt-1.5 w-2.5 h-2.5 bg-neutral-400 dark:bg-neutral-600 border-2 border-white dark:border-neutral-900" aria-hidden="true"></span>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-1.5 py-0.2 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 font-mono text-[9px] font-black uppercase">
+                                        GATEWAY
+                                    </span>
+                                    <time class="font-mono text-[10px] text-neutral-500 font-bold">16:00:00 UTC</time>
+                                </div>
+                                <h6 class="text-xs font-bold text-neutral-950 dark:text-white mt-1">SEC Cryptographic Hash Stamped</h6>
+                                <p class="text-[11px] font-mono text-neutral-600 dark:text-neutral-400 mt-0.5 truncate">SHA256: 8f9b...a10e (Attestation Verified)</p>
+                            </li>
+                        </ol>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+    </main>
+
+    <!-- SYSTEM FOOTER -->
+    <footer
+        class="h-14 bg-black text-neutral-300 px-6 flex items-center justify-between text-xs border-t-2 border-neutral-700 mt-12">
+        <div class="flex items-center gap-2">
+            <span class="font-extrabold text-white">SHOWCASE<span class="text-[#86BC25]">.</span></span>
+            <span class="font-medium text-neutral-300">Enterprise UI Component Framework Guidelines</span>
+        </div>
+        <div class="font-mono text-[11px] font-bold text-neutral-400">
+            SPEC-HASH: DL-2026-UI-STD-WCAG-AAA
+        </div>
+    </footer>
+
+    <!-- INTERACTION SCRIPTS -->
+    <script>
+        // ----------------------------------------------------
+        // THEME MANAGEMENT (System Preference + LocalStorage)
+        // ----------------------------------------------------
+        function updateThemeIcons() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const sun = document.getElementById('themeSunIcon');
+            const moon = document.getElementById('themeMoonIcon');
+            if (sun && moon) {
+                if (isDark) {
+                    sun.classList.remove('hidden');
+                    moon.classList.add('hidden');
+                } else {
+                    sun.classList.add('hidden');
+                    moon.classList.remove('hidden');
+                }
+            }
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeIcons();
+        }
+
+        (function initTheme() {
+            const saved = localStorage.getItem('theme');
+            if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else if (saved === 'light') {
+                document.documentElement.classList.remove('dark');
+            }
+            updateThemeIcons();
+        })();
+
+        // ----------------------------------------------------
+        // TOAST NOTIFICATION UTILITY
+        // ----------------------------------------------------
+        let toastTimeout = null;
+        function showToast(message, isAlert = false) {
+            const toast = document.getElementById('toastNotification');
+            const toastMessage = document.getElementById('toastMessage');
+            if (!toast || !toastMessage) return;
+
+            toastMessage.textContent = message;
+            if (isAlert) {
+                toast.classList.add('border-red-600');
+                toast.classList.remove('border-[#86BC25]');
+            } else {
+                toast.classList.add('border-[#86BC25]');
+                toast.classList.remove('border-red-600');
+            }
+
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-24', 'opacity-0');
+            }, 2600);
+        }
+
+        // ----------------------------------------------------
+        // SYSTEM PROMPT COPY (All copy buttons trigger feedback)
+        // ----------------------------------------------------
+        function copySystemPrompt(triggerBtn) {
+            const promptText = `You are an expert Enterprise Frontend Engineer enforcing the Deloitte Enterprise Design System Standard.
+
+[UI DESIGN CONSTRAINTS & NON-NEGOTIABLES]:
+1. GEOMETRY: ALL visual elements must have 0px border-radius (border-radius: 0px !important). NEVER output rounded corners, pill shapes, soft inputs, or circular avatars. Everything is strictly rectangular and architectural.
+2. ACCENT DISCIPLINE: The signature accent color is Deloitte Green (#86BC25 / deloitte-green). It must ONLY be used for:
+   - The brand anchor dot (Deloitte.)
+   - Positive KPI trends, success validation marks, active tab indicator lines, and primary focus indicators.
+   - For small text on light backgrounds, use #628f14 or #4c750b for WCAG AAA contrast ratio compliance.
+3. COLOR PALETTE & WCAG CONTRAST:
+   - Primary: Pure Black (#000000), Pure White (#ffffff), Deloitte Green (#86BC25).
+   - Canvas: Light #EFEFF2, Dark #09090b.
+   - Cards & Surfaces: Light #ffffff, Dark #171717 (neutral-900).
+   - Structural Borders: Light #D8D8DC (neutral-300) to #A8A8B0, Dark #404040 (neutral-700). 
+   - Text Hierarchy: Primary #0a0a0a / #ffffff, Subtitles & Metadata #424248 (neutral-700) / #d4d4d4 (neutral-300). Avoid washed-out light greys for text.
+4. DARK MODE INTEGRITY:
+   - Every generated component MUST support dual-theme parity using Tailwind's dark: variant.
+   - Interactive hover states must be defined for both light and dark.
+5. TYPOGRAPHY & LABELS:
+   - Category markers and form field labels: Uppercase, bold/extrabold, tracking-wider (text-xs font-extrabold uppercase tracking-wider font-display).
+6. BUSINESS & AGENTIC WORKFLOW PATTERNS:
+   - Entity Metadata: Dense 2-column key-value grids (<dl>) with formatted IDs and status pills.
+   - Filtering & Intake: Multi-facet dropdown triggers, removable filter chips, and dashed document dropzones.
+   - Embedded AI Cards: Include confidence badge, bulleted analysis rationale, and dual explicit action triggers (Accept vs Override).
+   - Human Governance: Stage gates, reviewer attribution, risk assessment, and signature authorization buttons.
+   - Audit Trail: Chronological vertical timeline connecting events with actor badges (AGENT, USER, GATEWAY) and timestamps.`;
+
+            navigator.clipboard.writeText(promptText).then(() => {
+                const buttons = document.querySelectorAll('.copy-prompt-btn');
+                buttons.forEach(btn => {
+                    const originalHtml = btn.innerHTML;
+                    btn.innerHTML = '✓ Copied!';
+                    btn.classList.add('bg-white', 'text-black', 'border-[#86BC25]');
+                    setTimeout(() => {
+                        btn.innerHTML = originalHtml;
+                        btn.classList.remove('bg-white', 'text-black', 'border-[#86BC25]');
+                    }, 2000);
+                });
+                showToast('Deloitte System Constraint block copied to clipboard!');
+            }).catch(() => {
+                showToast('Unable to copy to clipboard. Please copy manually.', true);
+            });
+        }
+
+        // ----------------------------------------------------
+        // LIVE TEXTAREA CHARACTER COUNTER
+        // ----------------------------------------------------
+        const remarksTextarea = document.getElementById('control-deviation-remarks');
+        const remarksCounter = document.getElementById('remarksCounter');
+        if (remarksTextarea && remarksCounter) {
+            remarksTextarea.addEventListener('input', () => {
+                remarksCounter.textContent = `${remarksTextarea.value.length}/500`;
+            });
+        }
+
+        // ----------------------------------------------------
+        // REAL-TIME TABLE SEARCH FILTER
+        // ----------------------------------------------------
+        function filterEngagementTable() {
+            const query = document.getElementById('entitySearchInput').value.toLowerCase().trim();
+            const rows = document.querySelectorAll('#engagementTableBody .engagement-row');
+            const noResults = document.getElementById('noResultsRow');
+            const resultSummary = document.getElementById('tableResultCount');
+            let matchCount = 0;
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    row.classList.remove('hidden');
+                    matchCount++;
+                } else {
+                    row.classList.add('hidden');
+                }
+            });
+
+            if (matchCount === 0) {
+                noResults.classList.remove('hidden');
+            } else {
+                noResults.classList.add('hidden');
+            }
+
+            if (resultSummary) {
+                resultSummary.textContent = query
+                    ? `Search results: ${matchCount} matching engagement ${matchCount === 1 ? 'record' : 'records'}`
+                    : 'Real-time attestation stream showing 3 verified client entities';
+            }
+        }
+
+        // ----------------------------------------------------
+        // SEGMENTED ACTION BAR TOGGLE
+        // ----------------------------------------------------
+        function setSegmentedCadence(selectedBtn) {
+            const group = document.getElementById('segmentedCadenceGroup');
+            if (!group) return;
+            const buttons = group.querySelectorAll('button');
+
+            buttons.forEach(btn => {
+                btn.setAttribute('aria-pressed', 'false');
+                btn.className = 'flex-1 py-2.5 bg-white dark:bg-neutral-900 text-neutral-950 dark:text-white hover:bg-neutral-200 dark:hover:bg-neutral-800 text-xs font-bold uppercase tracking-wider cursor-pointer';
+            });
+
+            selectedBtn.setAttribute('aria-pressed', 'true');
+            selectedBtn.className = 'flex-1 py-2.5 bg-black text-white dark:bg-white dark:text-black text-xs font-black uppercase tracking-wider cursor-pointer';
+
+            showToast(`Interval changed to ${selectedBtn.textContent.trim()} cadence.`);
+        }
+
+        // ----------------------------------------------------
+        // UNDERLINE TABS SWITCHER
+        // ----------------------------------------------------
+        function switchUnderlineTab(activeTab) {
+            const tabs = document.querySelectorAll('.tab-btn');
+            tabs.forEach(tab => {
+                tab.setAttribute('aria-selected', 'false');
+                tab.className = 'tab-btn pb-2.5 text-xs font-bold font-display uppercase tracking-wider text-neutral-600 hover:text-neutral-950 dark:text-neutral-400 dark:hover:text-white border-b-4 border-transparent transition-colors cursor-pointer';
+            });
+
+            activeTab.setAttribute('aria-selected', 'true');
+            activeTab.className = 'tab-btn pb-2.5 text-xs font-black font-display uppercase tracking-wider text-neutral-950 dark:text-white border-b-4 border-[#86BC25] cursor-pointer';
+
+            showToast(`Navigated to tab: ${activeTab.textContent.trim()}`);
+        }
+    </script>
+</body>
+
+</html>
